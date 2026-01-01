@@ -47,6 +47,19 @@ describe('coerceValue', () => {
     expect(coerceValue('True')).toBe(true);
   });
 
+  it('coerces yes/no and y/n boolean equivalents', () => {
+    expect(coerceValue('yes')).toBe(true);
+    expect(coerceValue('y')).toBe(true);
+    expect(coerceValue('no')).toBe(false);
+    expect(coerceValue('n')).toBe(false);
+    expect(coerceValue('YES')).toBe(true);
+    expect(coerceValue('Yes')).toBe(true);
+    expect(coerceValue('Y')).toBe(true);
+    expect(coerceValue('NO')).toBe(false);
+    expect(coerceValue('No')).toBe(false);
+    expect(coerceValue('N')).toBe(false);
+  });
+
   it('coerces integer strings', () => {
     expect(coerceValue('123')).toBe(123);
     expect(coerceValue('0')).toBe(0);

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { z } from 'zod';
-import { configEnvy, createConfigEnvy } from './configEnvy.js';
+import { configEnvy, createConfigEnvy, applyDefaults, merge } from './configEnvy.js';
 
 describe('configEnvy', () => {
   describe('basic mapping', () => {
@@ -503,5 +503,103 @@ describe('createConfigEnvy', () => {
     // Override coerce
     const config = loadConfig({ env, coerce: false });
     expect(config).toEqual({ port: '3000' });
+  });
+});
+
+describe('applyDefaults', () => {
+  it('applies default values to empty config', () => {
+    const config = {};
+    const defaults = { port: 3000, debug: false };
+    const result = applyDefaults(config, defaults);
+    expect(result).toEqual({ port: 3000, debug: false });
+  });
+
+  it('preserves existing values over defaults', () => {
+    const config = { port: 8080 };
+    const defaults = { port: 3000, debug: false };
+    const result = applyDefaults(config, defaults);
+    expect(result).toEqual({ port: 8080, debug: false });
+  });
+
+  it('recursively applies defaults to nested objects', () => {
+    const config = { log: { level: 'debug' } };
+    const defaults = { port: 3000, log: { level: 'info', path: '/var/log' } };
+    const result = applyDefaults(config, defaults);
+    expect(result).toEqual({
+      port: 3000,
+      log: { level: 'debug', path: '/var/log' }
+    });
+  });
+
+  it('handles deeply nested objects', () => {
+    const config = { database: { connection: { host: 'localhost' } } };
+    const defaults = {
+      database: { connection: { host: 'db.example.com', port: 5432 }, timeout: 30 }
+    };
+    const result = applyDefaults(config, defaults);
+    expect(result).toEqual({
+      database: {
+        connection: { host: 'localhost', port: 5432 },
+        timeout: 30
+      }
+    });
+  });
+
+  it('does not override with undefined defaults', () => {
+    const config = { port: 8080 };
+    const defaults = { port: undefined, debug: false };
+    const result = applyDefaults(config, defaults);
+    expect(result).toEqual({ port: 8080, debug: false });
+  });
+});
+
+describe('merge', () => {
+  it('merges two flat objects', () => {
+    const obj1 = { port: 3000, debug: false };
+    const obj2 = { debug: true, host: 'localhost' };
+    const result = merge(obj1, obj2);
+    expect(result).toEqual({ port: 3000, debug: true, host: 'localhost' });
+  });
+
+  it('recursively merges nested objects', () => {
+    const obj1 = { port: 3000, log: { level: 'info' } };
+    const obj2 = { log: { path: '/var/log' }, debug: true };
+    const result = merge(obj1, obj2);
+    expect(result).toEqual({
+      port: 3000,
+      log: { level: 'info', path: '/var/log' },
+      debug: true
+    });
+  });
+
+  it('overwrites values from second object', () => {
+    const obj1 = { port: 3000, debug: false };
+    const obj2 = { port: 8080 };
+    const result = merge(obj1, obj2);
+    expect(result).toEqual({ port: 8080, debug: false });
+  });
+
+  it('handles deeply nested merging', () => {
+    const obj1 = {
+      database: { connection: { host: 'localhost', port: 5432 }, timeout: 30 }
+    };
+    const obj2 = {
+      database: { connection: { host: 'db.example.com' }, poolSize: 10 }
+    };
+    const result = merge(obj1, obj2);
+    expect(result).toEqual({
+      database: {
+        connection: { host: 'db.example.com', port: 5432 },
+        timeout: 30,
+        poolSize: 10
+      }
+    });
+  });
+
+  it('does not merge arrays recursively', () => {
+    const obj1 = { tags: ['a', 'b'] };
+    const obj2 = { tags: ['c', 'd'] };
+    const result = merge(obj1, obj2);
+    expect(result).toEqual({ tags: ['c', 'd'] });
   });
 });
