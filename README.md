@@ -12,6 +12,7 @@ Automatically map `process.env` entries to strongly-typed config objects with ca
 - **Type Coercion**: Automatically converts strings to numbers and booleans
 - **Prefix Filtering**: Only load variables with a specific prefix (e.g., `APP_`)
 - **Zod Validation**: Optional schema validation with full TypeScript type inference
+- **Type Utilities**: `ToEnv<T>`, `FromEnv<T>`, `WithPrefix<T>` for type-level transformations
 - **Zero Dependencies Runtime**: Uses Zod only when you opt-in to schema validation
 
 ## Installation
@@ -176,6 +177,77 @@ Create a reusable config loader with preset options.
 const loadConfig = createConfigEnvy({ prefix: 'APP', schema: mySchema });
 const config = loadConfig(); // Uses defaults
 const testConfig = loadConfig({ env: testEnv }); // Override env
+```
+
+## Type Utilities
+
+configenvy exports type utilities to help with type-safe environment variable handling:
+
+### `ToEnv<T>`
+
+Convert a nested config type to a flat SCREAMING_SNAKE_CASE env record:
+
+```typescript
+import type { ToEnv } from 'configenvy';
+
+type Config = {
+  portNumber: number;
+  log: {
+    level: string;
+    path: string;
+  };
+};
+
+type Env = ToEnv<Config>;
+// {
+//   PORT_NUMBER: string;
+//   LOG_LEVEL: string;
+//   LOG_PATH: string;
+// }
+```
+
+### `FromEnv<T>`
+
+Convert flat env keys to camelCase (uses type-fest's `CamelCasedPropertiesDeep`):
+
+```typescript
+import type { FromEnv } from 'configenvy';
+
+type Env = { PORT_NUMBER: string; LOG_LEVEL: string };
+type Config = FromEnv<Env>;
+// { portNumber: string; logLevel: string }
+```
+
+### `WithPrefix<T, P>` / `WithoutPrefix<T, P>`
+
+Add or remove prefixes from env keys:
+
+```typescript
+import type { WithPrefix, WithoutPrefix } from 'configenvy';
+
+type Env = { PORT: string; DEBUG: string };
+type PrefixedEnv = WithPrefix<Env, 'APP'>;
+// { APP_PORT: string; APP_DEBUG: string }
+
+type Unprefixed = WithoutPrefix<PrefixedEnv, 'APP'>;
+// { PORT: string; DEBUG: string }
+```
+
+### `SchemaToEnv<T>`
+
+Extract env type from a Zod schema's inferred type:
+
+```typescript
+import type { SchemaToEnv } from 'configenvy';
+import { z } from 'zod';
+
+const schema = z.object({
+  port: z.number(),
+  log: z.object({ level: z.string() })
+});
+
+type Env = SchemaToEnv<z.infer<typeof schema>>;
+// { PORT: string; LOG_LEVEL: string }
 ```
 
 ## Type Coercion Rules
