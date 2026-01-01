@@ -412,3 +412,71 @@ export function createConfigEnvy<T extends z.ZodType>(
     return configEnvy(mergedOptions as Omit<ConfigEnvyOptions, 'schema'>);
   };
 }
+
+/**
+
+ * Recursively apply default values to a config object
+ * @example
+ * const config = { log: { level: 'debug' } };
+ * const defaults = { port: 3000, log: { level: 'info', path: '/var/log' } };
+ * const finalConfig = applyDefaults(config, defaults);
+ * // finalConfig = { port: 3000, log: { level: 'debug', path: '/var/log' } }
+
+
+ */
+export function applyDefaults<T extends ConfigObject>(
+  config: Partial<T>,
+  defaults: Partial<T>
+): Partial<T> {
+  for (const [key, value] of Object.entries(defaults)) {
+    if (config[key as keyof T] === undefined) {
+      config[key as keyof T] = value as T[keyof T];
+    } else if (
+      value &&
+      typeof value === 'object' &&
+      !Array.isArray(value) &&
+      config[key as keyof T] &&
+      typeof config[key as keyof T] === 'object' &&
+      !Array.isArray(config[key as keyof T])
+    ) {
+      // Recursively apply defaults for nested objects
+      config[key as keyof T] = applyDefaults(
+        config[key as keyof T] as Partial<ConfigObject>,
+        value as Partial<ConfigObject>
+      ) as T[keyof T];
+    }
+  }
+  return config;
+}
+
+/**
+ * Recursively merge two configuration objects
+ * @param obj1 The first configuration object
+ * @param obj2 The second configuration object to merge into the first
+ * @returns The merged configuration object
+ *
+ * @example
+ * const config1 = { port: 3000, log: { level: 'info' } };
+ * const config2 = { log: { path: '/var/log' }, debug: true };
+ * const merged = merge(config1, config2);
+ * // merged = { port: 3000, log: { level: 'info', path: '/var/log' }, debug: true }
+ */
+export function merge<T extends ConfigObject, U extends Partial<T>>(obj1: T, obj2: U): T & U {
+  const result: any = { ...obj1 };
+  for (const [key, value] of Object.entries(obj2)) {
+    if (
+      value &&
+      typeof value === 'object' &&
+      !Array.isArray(value) &&
+      result[key] &&
+      typeof result[key] === 'object' &&
+      !Array.isArray(result[key])
+    ) {
+      // Recursively merge nested objects
+      result[key] = merge(result[key] as ConfigObject, value as Partial<ConfigObject>);
+    } else {
+      result[key] = value;
+    }
+  }
+  return result;
+}

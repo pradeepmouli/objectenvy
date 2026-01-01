@@ -2,7 +2,8 @@ import type {
   CamelCasedPropertiesDeep,
   ScreamingSnakeCase,
   Simplify,
-  UnionToIntersection
+  UnionToIntersection,
+  UppercaseLetter
 } from 'type-fest';
 
 /**
@@ -100,21 +101,18 @@ export type WithoutPrefix<T, Prefix extends string> = {
  */
 export type SchemaToEnv<T> = T extends { _output: infer O } ? ToEnv<O> : ToEnv<T>;
 
-export type BooleanString =
+type InternalBooleanString =
   | 'true'
   | 'false'
-  | 'TRUE'
-  | 'FALSE'
+  | 'n'
+  | 'y'
+  | 'no'
+  | 'yes'
   | 'True'
   | 'False'
-  | 'Y'
-  | 'N'
-  | 'y'
-  | 'n'
-  | 'YES'
-  | 'NO'
-  | 'Yes'
-  | 'No';
+  | 'No'
+  | 'Yes';
+export type BooleanString = Simplify<Uppercase<InternalBooleanString> | InternalBooleanString>;
 
 export type NumberString = `${number}`;
 

@@ -57,13 +57,16 @@ export function parseEnvKeyToPath(key: string, prefix?: string): string[] {
     .filter((part) => part.length > 0);
 }
 
+const trueEquivalents = new Set(['true', 'yes', 'y']);
+const falseEquivalents = new Set(['false', 'no', 'n']);
+
 /**
  * Coerce a string value to the appropriate type
  */
 export function coerceValue(value: string): string | number | boolean {
   // Boolean
-  if (value.toLowerCase() === 'true') return true;
-  if (value.toLowerCase() === 'false') return false;
+  if (trueEquivalents.has(value.toLowerCase())) return true;
+  if (falseEquivalents.has(value.toLowerCase())) return false;
 
   // Number
   if (/^-?\d+$/.test(value)) {
