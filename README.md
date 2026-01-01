@@ -4,8 +4,9 @@ Automatically map `process.env` entries to strongly-typed config objects with ca
 
 ## Features
 
-- **Automatic Mapping**: `PORT_NUMBER=1234` → `{ port: { number: 1234 } }`
-- **Nested Structures**: `LOG_LEVEL` + `LOG_PATH` → `{ log: { level: ..., path: ... } }`
+- **Smart Nesting**: Only nests when multiple entries share a common prefix
+  - `PORT_NUMBER=1234` → `{ portNumber: 1234 }` (single entry stays flat)
+  - `LOG_LEVEL` + `LOG_PATH` → `{ log: { level: ..., path: ... } }` (multiple entries get nested)
 - **Type Coercion**: Automatically converts strings to numbers and booleans
 - **Prefix Filtering**: Only load variables with a specific prefix (e.g., `APP_`)
 - **Zod Validation**: Optional schema validation with full TypeScript type inference
@@ -27,22 +28,22 @@ yarn add configenvy
 import { configEnvy } from 'configenvy';
 
 // Given these environment variables:
-// PORT=3000
-// LOG_LEVEL=debug
+// PORT_NUMBER=3000          <- single PORT_* entry, stays flat
+// LOG_LEVEL=debug           <- multiple LOG_* entries, gets nested
 // LOG_PATH=/var/log
-// DATABASE_HOST=localhost
+// DATABASE_HOST=localhost   <- multiple DATABASE_* entries, gets nested
 // DATABASE_PORT=5432
 
 const config = configEnvy();
 
 // Result:
 // {
-//   port: 3000,
-//   log: {
+//   portNumber: 3000,        // flat (only one PORT_* entry)
+//   log: {                   // nested (multiple LOG_* entries)
 //     level: 'debug',
 //     path: '/var/log'
 //   },
-//   database: {
+//   database: {              // nested (multiple DATABASE_* entries)
 //     host: 'localhost',
 //     port: 5432
 //   }
@@ -75,13 +76,15 @@ const config = configEnvy({ prefix: 'APP' });
 import { configEnvy } from 'configenvy';
 import { z } from 'zod';
 
+// Define your expected config shape
+// (must match the smart nesting behavior based on your env vars)
 const schema = z.object({
-  port: z.number().min(1000).max(65535),
-  log: z.object({
+  port: z.number().min(1000).max(65535),  // APP_PORT (single entry)
+  log: z.object({                          // APP_LOG_* (multiple entries)
     level: z.enum(['debug', 'info', 'warn', 'error']),
     path: z.string()
   }),
-  database: z.object({
+  database: z.object({                     // APP_DATABASE_* (multiple entries)
     host: z.string(),
     port: z.number(),
     ssl: z.boolean().default(false)

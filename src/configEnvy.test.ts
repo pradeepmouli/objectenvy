@@ -16,22 +16,24 @@ describe('configEnvy', () => {
       });
     });
 
-    it('maps SNAKE_CASE to nested camelCase structure', () => {
+    it('keeps single SNAKE_CASE entry flat as camelCase', () => {
       const env = {
         PORT_NUMBER: '1234'
       };
       const config = configEnvy({ env });
+      // Only one PORT_* entry, so it stays flat
       expect(config).toEqual({
-        port: { number: 1234 }
+        portNumber: 1234
       });
     });
 
-    it('groups related env vars into nested objects', () => {
+    it('nests when multiple entries share a prefix', () => {
       const env = {
         LOG_LEVEL: 'debug',
         LOG_PATH: '/var/log'
       };
       const config = configEnvy({ env });
+      // Multiple LOG_* entries, so they get nested
       expect(config).toEqual({
         log: {
           level: 'debug',
@@ -40,13 +42,32 @@ describe('configEnvy', () => {
       });
     });
 
-    it('handles deeply nested structures', () => {
+    it('mixes flat and nested based on prefix count', () => {
+      const env = {
+        PORT_NUMBER: '1234',
+        LOG_LEVEL: 'debug',
+        LOG_PATH: '/var/log'
+      };
+      const config = configEnvy({ env });
+      // PORT_NUMBER is flat (only one PORT_* entry)
+      // LOG_* entries are nested (multiple)
+      expect(config).toEqual({
+        portNumber: 1234,
+        log: {
+          level: 'debug',
+          path: '/var/log'
+        }
+      });
+    });
+
+    it('handles deeply nested structures when multiple entries share prefix', () => {
       const env = {
         DATABASE_CONNECTION_HOST: 'localhost',
         DATABASE_CONNECTION_PORT: '5432',
         DATABASE_CONNECTION_NAME: 'mydb'
       };
       const config = configEnvy({ env });
+      // Multiple DATABASE_* entries, so they get nested
       expect(config).toEqual({
         database: {
           connection: {
@@ -55,6 +76,17 @@ describe('configEnvy', () => {
             name: 'mydb'
           }
         }
+      });
+    });
+
+    it('keeps deeply nested single entry flat', () => {
+      const env = {
+        DATABASE_CONNECTION_STRING: 'postgres://localhost'
+      };
+      const config = configEnvy({ env });
+      // Only one DATABASE_* entry, stays flat
+      expect(config).toEqual({
+        databaseConnectionString: 'postgres://localhost'
       });
     });
   });
@@ -130,21 +162,20 @@ describe('configEnvy', () => {
       });
     });
 
-    it('handles nested keys with prefix', () => {
+    it('handles nested keys with prefix when multiple share prefix', () => {
       const env = {
         APP_LOG_LEVEL: 'debug',
         APP_LOG_PATH: '/var/log',
         APP_DB_HOST: 'localhost'
       };
       const config = configEnvy({ env, prefix: 'APP' });
+      // LOG has 2 entries, DB has 1 entry
       expect(config).toEqual({
         log: {
           level: 'debug',
           path: '/var/log'
         },
-        db: {
-          host: 'localhost'
-        }
+        dbHost: 'localhost'
       });
     });
 
@@ -160,7 +191,7 @@ describe('configEnvy', () => {
   });
 
   describe('custom delimiter', () => {
-    it('uses double underscore for nesting', () => {
+    it('uses double underscore for nesting when multiple entries share prefix', () => {
       const env = {
         LOG__LEVEL: 'debug',
         LOG__FILE_PATH: '/var/log'
@@ -171,6 +202,17 @@ describe('configEnvy', () => {
           level: 'debug',
           filePath: '/var/log'
         }
+      });
+    });
+
+    it('keeps single entry flat with double underscore delimiter', () => {
+      const env = {
+        DATABASE__CONNECTION_STRING: 'postgres://localhost'
+      };
+      const config = configEnvy({ env, delimiter: '__' });
+      // Only one DATABASE__* entry
+      expect(config).toEqual({
+        databaseConnectionString: 'postgres://localhost'
       });
     });
 
@@ -244,21 +286,22 @@ describe('configEnvy', () => {
 
     it('provides type safety with schema', () => {
       const schema = z.object({
-        port: z.number(),
+        portNumber: z.number(),
         log: z.object({
           level: z.string()
         })
       });
 
       const env = {
-        PORT: '3000',
-        LOG_LEVEL: 'info'
+        PORT_NUMBER: '3000',
+        LOG_LEVEL: 'info',
+        LOG_PATH: '/var/log'
       };
 
       const config = configEnvy({ env, schema });
 
       // TypeScript should infer these types
-      const port: number = config.port;
+      const port: number = config.portNumber;
       const level: string = config.log.level;
 
       expect(port).toBe(3000);
@@ -267,7 +310,7 @@ describe('configEnvy', () => {
   });
 
   describe('complex scenarios', () => {
-    it('handles a realistic app config', () => {
+    it('handles a realistic app config with smart nesting', () => {
       const env = {
         APP_PORT: '3000',
         APP_HOST: '0.0.0.0',
@@ -297,9 +340,7 @@ describe('configEnvy', () => {
           name: 'myapp',
           ssl: true
         },
-        redis: {
-          url: 'redis://localhost:6379'
-        },
+        redisUrl: 'redis://localhost:6379', // Only one REDIS_* entry, stays flat
         feature: {
           new: { ui: true },
           dark: { mode: false }
