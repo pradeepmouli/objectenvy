@@ -1,11 +1,17 @@
 {
-  "name": "template-ts",
+  "name": "configenvy",
   "version": "0.1.0",
-  "description": "TypeScript project template with modern tooling and best practices",
+  "description": "Automatically map process.env to strongly-typed, nested config objects with camelCase fields",
   "keywords": [
-    "boilerplate",
-    "template",
-    "typescript"
+    "config",
+    "configuration",
+    "env",
+    "environment",
+    "typescript",
+    "type-safe",
+    "zod",
+    "nested",
+    "camelcase"
   ],
   "license": "MIT",
   "author": "",
