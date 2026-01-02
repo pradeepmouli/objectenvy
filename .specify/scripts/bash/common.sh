@@ -154,6 +154,18 @@ EOF
 check_file() { [[ -f "$1" ]] && echo "  ✓ $2" || echo "  ✗ $2"; }
 check_dir() { [[ -d "$1" && -n $(ls -A "$1" 2>/dev/null) ]] && echo "  ✓ $2" || echo "  ✗ $2"; }
 
+# Generate a clean branch name from a description
+generate_branch_name() {
+    local description="$1"
+    echo "$description" | \
+        tr '[:upper:]' '[:lower:]' | \
+        sed -e 's/[^a-z0-9]/-/g' \
+            -e 's/--*/-/g' \
+            -e 's/^-//' \
+            -e 's/-$//' | \
+        cut -c1-50
+}
+
 
 # Extended branch validation supporting spec-kit-extensions
 check_feature_branch() {
