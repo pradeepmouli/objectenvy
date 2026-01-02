@@ -16,6 +16,7 @@
   "license": "MIT",
   "author": "",
   "type": "module",
+  "private": false,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
