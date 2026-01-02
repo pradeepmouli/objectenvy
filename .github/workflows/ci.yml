@@ -2,53 +2,18 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [master, develop]
   pull_request:
-    branches: [main, develop]
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+    branches: [master, develop]
 
 jobs:
-  quality:
-    name: Code Quality
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Check formatting
-        run: pnpm format:check
-
-      - name: Lint
-        run: pnpm lint
-
-      - name: Type check
-        run: pnpm type-check
-
-  test:
-    name: Test
+  lint-test-build:
+    name: Lint, test, and build
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        node-version: [20, 22]
+        node-version: [20.x, 24.x]
 
     steps:
       - name: Checkout code
@@ -68,45 +33,37 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run tests
-        run: pnpm test:coverage
+      - name: Type check
+        run: pnpm type-check
 
-      - name: Upload coverage reports
-        if: matrix.node-version == 20
-        uses: codecov/codecov-action@v5
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          fail_ci_if_error: false
+      - name: Lint
+        run: pnpm lint
 
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    needs: [quality, test]
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - name: Format check
+        run: pnpm format:check
 
       - name: Build
         run: pnpm build
 
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v6
+      - name: Test
+        run: pnpm test
+
+      - name: Coverage
+        if: matrix.node-version == '20.x'
+        run: pnpm test:coverage
+
+      - name: Upload coverage reports
+        if: matrix.node-version == '20.x'
+        uses: codecov/codecov-action@v5
         with:
-          name: dist
-          path: dist/
-          retention-days: 7
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/lcov.info
+          fail_ci_if_error: false
+
+      - name: Security audit
+        run: pnpm audit --audit-level moderate
+        continue-on-error: true
+
+      - name: Bundle size limit
+        if: matrix.node-version == '20.x'
+        run: pnpm dlx size-limit

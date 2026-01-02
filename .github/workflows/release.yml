@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     branches:
-      - main
+      - master
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -65,7 +65,6 @@ jobs:
           release_name: v${{ fromJson(steps.changesets.outputs.publishedPackages)[0].version }}
           body: |
             Release ${{ fromJson(steps.changesets.outputs.publishedPackages)[0].version }}
-
-            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
+            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/master/CHANGELOG.md) for details.
           draft: false
           prerelease: ${{ contains(fromJson(steps.changesets.outputs.publishedPackages)[0].version, '-') }}

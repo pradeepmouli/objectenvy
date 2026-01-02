@@ -1,0 +1,7 @@
+[
+  {
+    "name": "configenvy bundle",
+    "path": "dist/index.js",
+    "limit": "25 KB"
+  }
+]
