@@ -79,6 +79,53 @@ describe('coerceValue', () => {
     expect(coerceValue('123abc')).toBe('123abc');
     expect(coerceValue('')).toBe('');
   });
+
+  it('parses comma-separated strings into arrays', () => {
+    expect(coerceValue('foo,bar,zed')).toEqual(['foo', 'bar', 'zed']);
+    expect(coerceValue('a,b,c')).toEqual(['a', 'b', 'c']);
+    expect(coerceValue('localhost,example.com')).toEqual(['localhost', 'example.com']);
+  });
+
+  it('coerces array elements to appropriate types', () => {
+    expect(coerceValue('1,2,3')).toEqual([1, 2, 3]);
+    expect(coerceValue('true,false')).toEqual([true, false]);
+    expect(coerceValue('3.14,2.71,1.41')).toEqual([3.14, 2.71, 1.41]);
+  });
+
+  it('handles mixed type arrays', () => {
+    expect(coerceValue('1,hello,true')).toEqual([1, 'hello', true]);
+    expect(coerceValue('3.14,foo,false,42')).toEqual([3.14, 'foo', false, 42]);
+    expect(coerceValue('yes,123,world')).toEqual([true, 123, 'world']);
+  });
+
+  it('trims whitespace around array elements', () => {
+    expect(coerceValue(' foo , bar , zed ')).toEqual(['foo', 'bar', 'zed']);
+    expect(coerceValue('1 , 2 , 3')).toEqual([1, 2, 3]);
+    expect(coerceValue('  a  ,  b  ,  c  ')).toEqual(['a', 'b', 'c']);
+  });
+
+  it('filters out empty array elements', () => {
+    expect(coerceValue('a,,b')).toEqual(['a', 'b']);
+    expect(coerceValue('foo,,bar,,zed')).toEqual(['foo', 'bar', 'zed']);
+    expect(coerceValue(',1,2,3,')).toEqual([1, 2, 3]);
+  });
+
+  it('treats single value with trailing/leading comma as single value', () => {
+    expect(coerceValue(',single,')).toBe('single');
+    expect(coerceValue(',123,')).toBe(123);
+    expect(coerceValue(',true,')).toBe(true);
+  });
+
+  it('preserves single values without commas', () => {
+    expect(coerceValue('single')).toBe('single');
+    expect(coerceValue('123')).toBe(123);
+    expect(coerceValue('true')).toBe(true);
+  });
+
+  it('handles edge case of only commas', () => {
+    expect(coerceValue(',')).toBe('');
+    expect(coerceValue(',,,')).toBe('');
+  });
 });
 
 describe('setNestedValue', () => {

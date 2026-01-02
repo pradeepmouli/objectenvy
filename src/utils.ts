@@ -62,8 +62,30 @@ const falseEquivalents = new Set(['false', 'no', 'n']);
 
 /**
  * Coerce a string value to the appropriate type
+ * Supports comma-separated values which will be parsed as arrays
  */
-export function coerceValue(value: string): string | number | boolean {
+export function coerceValue(value: string): string | number | boolean | Array<string | number | boolean> {
+  // Check for comma-separated values (arrays)
+  if (value.includes(',')) {
+    const elements = value
+      .split(',')
+      .map((element) => element.trim())
+      .filter((element) => element.length > 0);
+
+    // Only return array if we have multiple elements after filtering
+    if (elements.length > 1) {
+      return elements.map((element) => coerceValue(element) as string | number | boolean);
+    }
+    // If only one element after filtering, treat as single value
+    if (elements.length === 1) {
+      value = elements[0]!;
+    }
+    // If no elements after filtering (edge case: only commas), return empty string
+    if (elements.length === 0) {
+      return '';
+    }
+  }
+
   // Boolean
   if (trueEquivalents.has(value.toLowerCase())) return true;
   if (falseEquivalents.has(value.toLowerCase())) return false;

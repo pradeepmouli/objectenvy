@@ -603,3 +603,133 @@ describe('merge', () => {
     expect(result).toEqual({ tags: ['c', 'd'] });
   });
 });
+
+describe('array value support', () => {
+  it('parses comma-separated values as arrays', () => {
+    const env = {
+      ALLOWED_HOSTS: 'localhost,example.com,api.example.com'
+    };
+    const config = configEnvy({ env });
+    expect(config).toEqual({
+      allowedHosts: ['localhost', 'example.com', 'api.example.com']
+    });
+  });
+
+  it('coerces array elements to appropriate types', () => {
+    const env = {
+      PORT_NUMBERS: '3000,3001,3002',
+      FEATURE_FLAGS: 'feature1,feature2,feature3',
+      BOOLEAN_LIST: 'true,false,yes,no'
+    };
+    const config = configEnvy({ env });
+    expect(config).toEqual({
+      portNumbers: [3000, 3001, 3002],
+      featureFlags: ['feature1', 'feature2', 'feature3'],
+      booleanList: [true, false, true, false]
+    });
+  });
+
+  it('handles mixed type arrays', () => {
+    const env = {
+      MIXED_VALUES: '1,hello,true,3.14'
+    };
+    const config = configEnvy({ env });
+    expect(config).toEqual({
+      mixedValues: [1, 'hello', true, 3.14]
+    });
+  });
+
+  it('works with nested configs and arrays', () => {
+    const env = {
+      LOG_LEVELS: 'debug,info,warn',
+      LOG_PATH: '/var/log',
+      SERVER_HOSTS: 'host1,host2',
+      SERVER_PORT: '3000'
+    };
+    const config = configEnvy({ env });
+    expect(config).toEqual({
+      log: {
+        levels: ['debug', 'info', 'warn'],
+        path: '/var/log'
+      },
+      server: {
+        hosts: ['host1', 'host2'],
+        port: 3000
+      }
+    });
+  });
+
+  it('works with prefix filtering and arrays', () => {
+    const env = {
+      APP_ALLOWED_ORIGINS: 'http://localhost,https://example.com',
+      APP_PORT: '3000',
+      OTHER_VAR: 'ignored'
+    };
+    const config = configEnvy({ env, prefix: 'APP' });
+    expect(config).toEqual({
+      allowedOrigins: ['http://localhost', 'https://example.com'],
+      port: 3000
+    });
+  });
+
+  it('validates arrays with Zod schema', () => {
+    const schema = z.object({
+      allowedHosts: z.array(z.string()),
+      ports: z.array(z.number())
+    });
+
+    const env = {
+      ALLOWED_HOSTS: 'localhost,example.com',
+      PORTS: '3000,3001,3002'
+    };
+
+    const config = configEnvy({ env, schema });
+    expect(config).toEqual({
+      allowedHosts: ['localhost', 'example.com'],
+      ports: [3000, 3001, 3002]
+    });
+  });
+
+  it('does not parse arrays when coerce is disabled', () => {
+    const env = {
+      HOSTS: 'host1,host2,host3'
+    };
+    const config = configEnvy({ env, coerce: false });
+    // With coerce disabled, values remain as strings
+    expect(config).toEqual({
+      hosts: 'host1,host2,host3'
+    });
+  });
+
+  it('trims whitespace from array elements', () => {
+    const env = {
+      TAGS: ' tag1 , tag2 , tag3 '
+    };
+    const config = configEnvy({ env });
+    expect(config).toEqual({
+      tags: ['tag1', 'tag2', 'tag3']
+    });
+  });
+
+  it('filters empty array elements', () => {
+    const env = {
+      VALUES: 'a,,b,,,c'
+    };
+    const config = configEnvy({ env });
+    expect(config).toEqual({
+      values: ['a', 'b', 'c']
+    });
+  });
+
+  it('preserves single values without commas', () => {
+    const env = {
+      HOST: 'localhost',
+      PORT: '3000'
+    };
+    const config = configEnvy({ env });
+    expect(config).toEqual({
+      host: 'localhost',
+      port: 3000
+    });
+  });
+});
