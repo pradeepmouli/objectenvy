@@ -30,7 +30,7 @@ yarn add envyconfig
 ## Quick Start
 
 ```typescript
-import { configEnvy } from 'envyconfig';
+import { config } from 'envyconfig';
 
 // Given these environment variables:
 // PORT_NUMBER=3000          <- single PORT_* entry, stays flat
@@ -39,7 +39,7 @@ import { configEnvy } from 'envyconfig';
 // DATABASE_HOST=localhost   <- multiple DATABASE_* entries, gets nested
 // DATABASE_PORT=5432
 
-const config = configEnvy();
+const result = config();
 
 // Result:
 // {
@@ -60,17 +60,17 @@ const config = configEnvy();
 ### Basic Usage
 
 ```typescript
-import { configEnvy } from 'envyconfig';
+import { config } from 'envyconfig';
 
 // Load all environment variables
-const config = configEnvy();
+const result = config();
 ```
 
 ### With Prefix Filtering
 
 ```typescript
 // Given: APP_PORT=3000, APP_DEBUG=true, OTHER_VAR=ignored
-const config = configEnvy({ prefix: 'APP' });
+const result = config({ prefix: 'APP' });
 
 // Result: { port: 3000, debug: true }
 ```
@@ -80,7 +80,7 @@ const config = configEnvy({ prefix: 'APP' });
 When you provide a schema, envyconfig uses the schema structure to determine nesting. This gives you full control over the output shape:
 
 ```typescript
-import { configEnvy } from 'envyconfig';
+import { config } from 'envyconfig';
 import { z } from 'zod';
 
 // The schema defines exactly how env vars map to your config
@@ -98,7 +98,7 @@ const schema = z.object({
 });
 
 // Given: PORT_NUMBER=3000, LOG_LEVEL=debug, LOG_PATH=/var/log, DATABASE_HOST=localhost, DATABASE_PORT=5432
-const config = configEnvy({ schema, prefix: 'APP' });
+const result = config({ schema, prefix: 'APP' });
 
 // Result matches schema structure exactly:
 // {
@@ -107,13 +107,13 @@ const config = configEnvy({ schema, prefix: 'APP' });
 //   database: { host: 'localhost', port: 5432, ssl: false }
 // }
 
-// TypeScript knows: config.portNumber is number, config.log.level is 'debug' | 'info' | 'warn' | 'error'
+// TypeScript knows: result.portNumber is number, result.log.level is 'debug' | 'info' | 'warn' | 'error'
 ```
 
 ### Reusable Config Loader
 
 ```typescript
-import { createConfigEnvy } from 'envyconfig';
+import { createConfig } from 'envyconfig';
 import { z } from 'zod';
 
 const schema = z.object({
@@ -122,16 +122,16 @@ const schema = z.object({
 });
 
 // Create a reusable loader with preset options
-const loadConfig = createConfigEnvy({
+const loadConfig = createConfig({
   prefix: 'APP',
   schema
 });
 
 // Use in your app
-const config = loadConfig();
+const result = loadConfig();
 
 // Override for testing
-const testConfig = loadConfig({
+const testResult = loadConfig({
   env: { APP_PORT: '3000', APP_DEBUG: 'true' }
 });
 ```
@@ -142,7 +142,7 @@ By default, each underscore creates a new nesting level. Use `delimiter: '__'` f
 
 ```typescript
 // Given: LOG__LEVEL=debug, LOG__FILE_PATH=/var/log
-const config = configEnvy({ delimiter: '__' });
+const result = config({ delimiter: '__' });
 
 // Result: { log: { level: 'debug', filePath: '/var/log' } }
 // Note: Single underscores become camelCase within the segment
@@ -151,13 +151,13 @@ const config = configEnvy({ delimiter: '__' });
 ### Disable Type Coercion
 
 ```typescript
-const config = configEnvy({ coerce: false });
+const result = config({ coerce: false });
 // All values remain strings
 ```
 
 ## API Reference
 
-### `configEnvy(options?)`
+### `config(options?)`
 
 Parse environment variables into a nested config object.
 
@@ -171,14 +171,14 @@ Parse environment variables into a nested config object.
 | `coerce` | `boolean` | `true` | Auto-convert strings to numbers/booleans |
 | `delimiter` | `string` | `'_'` | Delimiter for nesting (e.g., `'__'` for double underscore) |
 
-### `createConfigEnvy(defaultOptions)`
+### `createConfig(defaultOptions)`
 
 Create a reusable config loader with preset options.
 
 ```typescript
-const loadConfig = createConfigEnvy({ prefix: 'APP', schema: mySchema });
-const config = loadConfig(); // Uses defaults
-const testConfig = loadConfig({ env: testEnv }); // Override env
+const loadConfig = createConfig({ prefix: 'APP', schema: mySchema });
+const result = loadConfig(); // Uses defaults
+const testResult = loadConfig({ env: testEnv }); // Override env
 ```
 
 ## Type Utilities
