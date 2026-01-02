@@ -1,4 +1,6 @@
-# configenvy
+# envyconfig
+
+_Pronounced "env y config" (with y like Spanish "and")_
 
 Automatically map `process.env` entries to strongly-typed config objects with camelCase fields and nested structures.
 
@@ -18,17 +20,17 @@ Automatically map `process.env` entries to strongly-typed config objects with ca
 ## Installation
 
 ```bash
-npm install configenvy
+npm install envyconfig
 # or
-pnpm add configenvy
+pnpm add envyconfig
 # or
-yarn add configenvy
+yarn add envyconfig
 ```
 
 ## Quick Start
 
 ```typescript
-import { configEnvy } from 'configenvy';
+import { config } from 'envyconfig';
 
 // Given these environment variables:
 // PORT_NUMBER=3000          <- single PORT_* entry, stays flat
@@ -37,7 +39,7 @@ import { configEnvy } from 'configenvy';
 // DATABASE_HOST=localhost   <- multiple DATABASE_* entries, gets nested
 // DATABASE_PORT=5432
 
-const config = configEnvy();
+const result = config();
 
 // Result:
 // {
@@ -58,27 +60,27 @@ const config = configEnvy();
 ### Basic Usage
 
 ```typescript
-import { configEnvy } from 'configenvy';
+import { config } from 'envyconfig';
 
 // Load all environment variables
-const config = configEnvy();
+const result = config();
 ```
 
 ### With Prefix Filtering
 
 ```typescript
 // Given: APP_PORT=3000, APP_DEBUG=true, OTHER_VAR=ignored
-const config = configEnvy({ prefix: 'APP' });
+const result = config({ prefix: 'APP' });
 
 // Result: { port: 3000, debug: true }
 ```
 
 ### With Zod Schema (Schema-Guided Nesting)
 
-When you provide a schema, configenvy uses the schema structure to determine nesting. This gives you full control over the output shape:
+When you provide a schema, envyconfig uses the schema structure to determine nesting. This gives you full control over the output shape:
 
 ```typescript
-import { configEnvy } from 'configenvy';
+import { config } from 'envyconfig';
 import { z } from 'zod';
 
 // The schema defines exactly how env vars map to your config
@@ -96,7 +98,7 @@ const schema = z.object({
 });
 
 // Given: PORT_NUMBER=3000, LOG_LEVEL=debug, LOG_PATH=/var/log, DATABASE_HOST=localhost, DATABASE_PORT=5432
-const config = configEnvy({ schema, prefix: 'APP' });
+const result = config({ schema, prefix: 'APP' });
 
 // Result matches schema structure exactly:
 // {
@@ -105,13 +107,13 @@ const config = configEnvy({ schema, prefix: 'APP' });
 //   database: { host: 'localhost', port: 5432, ssl: false }
 // }
 
-// TypeScript knows: config.portNumber is number, config.log.level is 'debug' | 'info' | 'warn' | 'error'
+// TypeScript knows: result.portNumber is number, result.log.level is 'debug' | 'info' | 'warn' | 'error'
 ```
 
 ### Reusable Config Loader
 
 ```typescript
-import { createConfigEnvy } from 'configenvy';
+import { createConfig } from 'envyconfig';
 import { z } from 'zod';
 
 const schema = z.object({
@@ -120,16 +122,16 @@ const schema = z.object({
 });
 
 // Create a reusable loader with preset options
-const loadConfig = createConfigEnvy({
+const loadConfig = createConfig({
   prefix: 'APP',
   schema
 });
 
 // Use in your app
-const config = loadConfig();
+const result = loadConfig();
 
 // Override for testing
-const testConfig = loadConfig({
+const testResult = loadConfig({
   env: { APP_PORT: '3000', APP_DEBUG: 'true' }
 });
 ```
@@ -140,7 +142,7 @@ By default, each underscore creates a new nesting level. Use `delimiter: '__'` f
 
 ```typescript
 // Given: LOG__LEVEL=debug, LOG__FILE_PATH=/var/log
-const config = configEnvy({ delimiter: '__' });
+const result = config({ delimiter: '__' });
 
 // Result: { log: { level: 'debug', filePath: '/var/log' } }
 // Note: Single underscores become camelCase within the segment
@@ -149,13 +151,13 @@ const config = configEnvy({ delimiter: '__' });
 ### Disable Type Coercion
 
 ```typescript
-const config = configEnvy({ coerce: false });
+const result = config({ coerce: false });
 // All values remain strings
 ```
 
 ## API Reference
 
-### `configEnvy(options?)`
+### `config(options?)`
 
 Parse environment variables into a nested config object.
 
@@ -169,26 +171,26 @@ Parse environment variables into a nested config object.
 | `coerce` | `boolean` | `true` | Auto-convert strings to numbers/booleans |
 | `delimiter` | `string` | `'_'` | Delimiter for nesting (e.g., `'__'` for double underscore) |
 
-### `createConfigEnvy(defaultOptions)`
+### `createConfig(defaultOptions)`
 
 Create a reusable config loader with preset options.
 
 ```typescript
-const loadConfig = createConfigEnvy({ prefix: 'APP', schema: mySchema });
-const config = loadConfig(); // Uses defaults
-const testConfig = loadConfig({ env: testEnv }); // Override env
+const loadConfig = createConfig({ prefix: 'APP', schema: mySchema });
+const result = loadConfig(); // Uses defaults
+const testResult = loadConfig({ env: testEnv }); // Override env
 ```
 
 ## Type Utilities
 
-configenvy exports type utilities to help with type-safe environment variable handling:
+envyconfig exports type utilities to help with type-safe environment variable handling:
 
 ### `ToEnv<T>`
 
 Convert a nested config type to a flat SCREAMING_SNAKE_CASE env record:
 
 ```typescript
-import type { ToEnv } from 'configenvy';
+import type { ToEnv } from 'envyconfig';
 
 type Config = {
   portNumber: number;
@@ -211,7 +213,7 @@ type Env = ToEnv<Config>;
 Convert flat env keys to camelCase (uses type-fest's `CamelCasedPropertiesDeep`):
 
 ```typescript
-import type { FromEnv } from 'configenvy';
+import type { FromEnv } from 'envyconfig';
 
 type Env = { PORT_NUMBER: string; LOG_LEVEL: string };
 type Config = FromEnv<Env>;
@@ -223,7 +225,7 @@ type Config = FromEnv<Env>;
 Add or remove prefixes from env keys:
 
 ```typescript
-import type { WithPrefix, WithoutPrefix } from 'configenvy';
+import type { WithPrefix, WithoutPrefix } from 'envyconfig';
 
 type Env = { PORT: string; DEBUG: string };
 type PrefixedEnv = WithPrefix<Env, 'APP'>;
@@ -238,7 +240,7 @@ type Unprefixed = WithoutPrefix<PrefixedEnv, 'APP'>;
 Extract env type from a Zod schema's inferred type:
 
 ```typescript
-import type { SchemaToEnv } from 'configenvy';
+import type { SchemaToEnv } from 'envyconfig';
 import { z } from 'zod';
 
 const schema = z.object({
