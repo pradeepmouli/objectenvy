@@ -1,6 +1,6 @@
 # API Reference & Architecture
 
-**Created**: January 3, 2026  
+**Created**: January 3, 2026
 **Version**: 1.0.0 (Specification)
 
 ## Shared Types & Interfaces
@@ -306,7 +306,7 @@ const env = parseEnvFile(`
   DATABASE_HOST=localhost
   DATABASE_PORT=5432
   DATABASE_SSL=true
-  
+
   # API Keys
   API_KEYS=key1,key2,key3
 `);
@@ -834,4 +834,3 @@ describe('end-to-end', () => {
   }
 }
 ```
-

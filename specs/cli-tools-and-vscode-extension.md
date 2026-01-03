@@ -1,7 +1,7 @@
 # CLI Tools & VS Code Extension Specification
 
-**Created**: January 3, 2026  
-**Status**: [x] Specification | [ ] In Progress | [ ] Complete  
+**Created**: January 3, 2026
+**Status**: [x] Specification | [ ] In Progress | [ ] Complete
 **Priority**: High
 
 ## Overview

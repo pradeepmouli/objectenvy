@@ -11,7 +11,7 @@ Following the instructions in [speckit.specify.prompt.md](file:///Users/pmouli/G
    - Output: Sample `.env` files with realistic values
    - Features: Prefix support, field filtering, comment generation
 
-2. **`type-generate-from`** - Generate types from `.env` files  
+2. **`type-generate-from`** - Generate types from `.env` files
    - Input: `.env` files
    - Output: TypeScript types, JSON schemas, JavaScript objects, Zod validators
    - Features: Smart type inference, nesting detection, array support
@@ -106,7 +106,7 @@ env-generate-from schema.json --prefix APP -o .env.prod
 
 **Supported Output Formats**:
 - ✅ TypeScript Interfaces
-- ✅ JSON Schemas  
+- ✅ JSON Schemas
 - ✅ JavaScript Objects
 - ✅ Zod Validators
 
@@ -328,7 +328,7 @@ If you have questions about the specification:
 
 You now have a **complete, detailed, production-ready specification** for:
 - ✅ **env-y-config** CLI tool
-- ✅ **config-y-env** CLI tool  
+- ✅ **config-y-env** CLI tool
 - ✅ **envyconfig-tools** VS Code extension
 
 With **everything needed** to begin implementation:
@@ -345,7 +345,6 @@ With **everything needed** to begin implementation:
 
 ---
 
-**Created**: January 3, 2026  
-**Version**: 1.0.0 (Specification Complete)  
+**Created**: January 3, 2026
+**Version**: 1.0.0 (Specification Complete)
 **Ready for**: Implementation starting January 6, 2026
-

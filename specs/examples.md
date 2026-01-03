@@ -1,6 +1,6 @@
 # Practical Examples & Use Cases
 
-**Created**: January 3, 2026  
+**Created**: January 3, 2026
 **Purpose**: Demonstrate real-world usage of env-y-config and config-y-env tools
 
 ---
@@ -612,4 +612,3 @@ const appConfig = config({ schema: appSchema });
 // Type-safe access with validation
 console.log(appConfig.database.host);
 ```
-

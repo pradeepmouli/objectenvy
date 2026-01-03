@@ -1,7 +1,7 @@
 # CLI Tools & VS Code Extension - Implementation Guide
 
-**Created**: January 3, 2026  
-**Target Version**: 1.0.0  
+**Created**: January 3, 2026
+**Target Version**: 1.0.0
 **Status**: Implementation Guide
 
 ## Quick Start for Developers
@@ -700,4 +700,3 @@ pnpm --filter envyconfig-tools publish
 - Integration with existing projects
 - Custom format plugins
 - Export to other languages (Python, Go, etc.)
-
