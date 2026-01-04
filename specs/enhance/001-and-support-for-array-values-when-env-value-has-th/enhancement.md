@@ -1,123 +1,112 @@
-# Enhancement: Array Value Support for Comma-Separated Environment Variables
+# Implementation Plan: [FEATURE]
 
-**Enhancement ID**: enhance-001
-**Branch**: `enhance/001-and-support-for-array-values-when-env-value-has-th`
-**Created**: 2026-01-02
-**Priority**: [ ] High | [x] Medium | [ ] Low
-**Component**: `src/utils.ts` (coerceValue function)
-**Status**: [ ] Planned | [ ] In Progress | [x] Complete
+**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
+**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
 
-## Input
-User description: "and support for array values when env value has the form foo,bar,zed"
+**Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/commands/plan.md` for the execution workflow.
 
-## Overview
-Add automatic detection and parsing of comma-separated values in environment variables, converting them to typed arrays. When an environment variable contains comma-separated values (e.g., `ALLOWED_HOSTS=foo,bar,zed`), the `coerceValue` function will automatically parse it into an array `['foo', 'bar', 'zed']` while preserving type coercion for each element.
+## Summary
 
-## Motivation
-Environment variables often need to represent lists of values (allowed hosts, feature flags, service URLs, etc.). Currently, users must manually split comma-separated strings in their application code. Built-in array support would:
-- Provide automatic parsing of comma-separated values
-- Apply type coercion to array elements (e.g., `"1,2,3"` → `[1, 2, 3]`)
-- Simplify configuration handling for multi-value settings
-- Maintain consistency with existing boolean/number coercion
+[Extract from feature spec: primary requirement + technical approach from research]
 
-## Proposed Changes
+## Technical Context
 
-**Core Logic**:
-- Detect comma-separated values in environment variable strings
-- Split values on comma delimiter and trim whitespace
-- Apply existing type coercion to each array element
-- Preserve backward compatibility for values that shouldn't be split
+<!--
+  ACTION REQUIRED: Replace the content in this section with the technical details
+  for the project. The structure here is presented in advisory capacity to guide
+  the iteration process.
+-->
 
-**Array Detection Strategy**:
-1. Check if value contains commas
-2. Split on comma and trim each element
-3. Apply coerceValue recursively to each element
-4. Return array if valid, otherwise return original string
+**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]
+**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]
+**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
+**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]
+**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
+**Project Type**: [single/web/mobile - determines source structure]
+**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]
+**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]
+**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
 
-**Edge Cases to Handle**:
-- Empty strings between commas (e.g., `"a,,b"` → skip empty values or `['a', '', 'b']`)
-- Escaped commas in values (consider if needed)
-- Mixed type arrays (e.g., `"true,123,hello"` → `[true, 123, 'hello']`)
-- Single values without commas (remain as-is)
+## Constitution Check
 
-**Files to Modify**:
-- `src/utils.ts` - Update `coerceValue` function to detect and parse arrays
-- `src/utils.test.ts` - Add comprehensive tests for array coercion
-- `src/configEnvy.test.ts` - Add integration tests with full config objects
-- `src/types.ts` - Update ConfigValue type to include arrays
+*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-**Breaking Changes**: [ ] Yes | [x] No
+Verify alignment with envyconfig Constitution v1.0.0 principles:
 
-This is a backward-compatible enhancement. Existing single-value environment variables will continue to work as before. Only values containing commas will be parsed as arrays.
+- [ ] **Type Safety First**: All new APIs designed with explicit types, no `any`
+- [ ] **Test-Driven Public APIs**: Test plan documented before implementation
+- [ ] **Code Quality Standards**: Linting/formatting rules identified for new code
+- [ ] **Semantic Versioning**: Breaking changes documented, version bump planned
+- [ ] **Documentation Discipline**: JSDoc requirements identified for new public APIs
+- [ ] **Modern TypeScript Patterns**: ES2022+ features used, no legacy patterns
+- [ ] **Zero-Runtime Dependencies**: No new runtime dependencies introduced (peer deps only if justified)
 
-## Implementation Plan
+## Project Structure
 
-**Phase 1: Implementation**
+### Documentation (this feature)
 
-**Tasks**:
-1. [X] Update `ConfigValue` type in `src/types.ts` to include array type
-2. [X] Modify `coerceValue` function in `src/utils.ts` to detect and parse comma-separated values
-3. [X] Add unit tests for array coercion in `src/utils.test.ts`
-4. [X] Add integration tests in `src/configEnvy.test.ts` for full config with arrays
-5. [X] Run full test suite and ensure no regressions
-6. [X] Update build and verify type checking passes
-
-**Acceptance Criteria**:
-- [X] `coerceValue("foo,bar,zed")` returns `['foo', 'bar', 'zed']`
-- [X] `coerceValue("1,2,3")` returns `[1, 2, 3]` (with type coercion)
-- [X] `coerceValue("true,false")` returns `[true, false]`
-- [X] Mixed type arrays work correctly (e.g., `"1,hello,true"` → `[1, 'hello', true]`)
-- [X] Single values without commas remain unchanged
-- [X] All existing tests continue to pass
-- [X] Type checking passes with updated ConfigValue type
-
-## Testing
-- [X] Unit tests added/updated
-  - Array parsing with various value types
-  - Edge cases (empty elements, single values, etc.)
-  - Mixed type arrays
-- [X] Integration tests pass
-  - Full config objects with array values
-  - Nested configs with arrays
-  - Schema validation with arrays (if applicable)
-- [X] Manual testing complete
-- [X] Edge cases verified
-  - Empty strings between commas
-  - Whitespace handling
-  - Single comma (edge case)
-
-## Verification Checklist
-- [X] Changes implemented as described
-- [X] Tests written and passing
-- [X] No regressions in existing functionality
-- [ ] Documentation updated (if needed) - README examples for array usage
-- [ ] Code reviewed (if appropriate)
-
-## Notes
-
-**Design Decisions**:
-- Use simple comma delimiter without support for escaped commas (YAGNI principle)
-- Apply type coercion to each array element for consistency
-- Trim whitespace around elements for user convenience
-- Filter out empty values between commas for cleaner arrays
-
-**Future Considerations**:
-- Custom array delimiter configuration (if users request it)
-- Support for escaped commas in values (if use cases emerge)
-- JSON array parsing support (e.g., `'["a","b","c"]'`)
-
-**Example Usage After Enhancement**:
-```typescript
-// Environment: ALLOWED_HOSTS=localhost,example.com,api.example.com
-const config = configEnvy();
-// config.allowedHosts = ['localhost', 'example.com', 'api.example.com']
-
-// Environment: PORT_NUMBERS=3000,3001,3002
-// config.portNumbers = [3000, 3001, 3002]
-
-// Environment: FEATURE_FLAGS=feature1,feature2,feature3
-// config.featureFlags = ['feature1', 'feature2', 'feature3']
+```text
+specs/[###-feature]/
+├── plan.md              # This file (/speckit.plan command output)
+├── research.md          # Phase 0 output (/speckit.plan command)
+├── data-model.md        # Phase 1 output (/speckit.plan command)
+├── quickstart.md        # Phase 1 output (/speckit.plan command)
+├── contracts/           # Phase 1 output (/speckit.plan command)
+└── tasks.md             # Phase 2 output (/speckit.tasks command - NOT created by /speckit.plan)
 ```
 
----
-*Enhancement created using `/enhance` workflow - See .specify/extensions/workflows/enhance/*
+### Source Code (repository root)
+<!--
+  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
+  for this feature. Delete unused options and expand the chosen structure with
+  real paths (e.g., apps/admin, packages/something). The delivered plan must
+  not include Option labels.
+-->
+
+```text
+# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
+src/
+├── models/
+├── services/
+├── cli/
+└── lib/
+
+tests/
+├── contract/
+├── integration/
+└── unit/
+
+# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
+backend/
+├── src/
+│   ├── models/
+│   ├── services/
+│   └── api/
+└── tests/
+
+frontend/
+├── src/
+│   ├── components/
+│   ├── pages/
+│   └── services/
+└── tests/
+
+# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
+api/
+└── [same as backend above]
+
+ios/ or android/
+└── [platform-specific structure: feature modules, UI flows, platform tests]
+```
+
+**Structure Decision**: [Document the selected structure and reference the real
+directories captured above]
+
+## Complexity Tracking
+
+> **Fill ONLY if Constitution Check has violations that must be justified**
+
+| Violation | Why Needed | Simpler Alternative Rejected Because |
+|-----------|------------|-------------------------------------|
+| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
+| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
