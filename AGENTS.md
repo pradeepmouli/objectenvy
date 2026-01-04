@@ -252,9 +252,13 @@ async function fetchData(): Promise<DataType> {
 - Vitest 4.0+ for testing
 - oxlint + oxfmt for linting and formatting
 - Node.js 20.0+ runtime
+- Commander.js for CLI argument parsing (002-cli-vscode-tools)
+- ts-morph for TypeScript AST manipulation (002-cli-vscode-tools)
+- VS Code Extension API 1.85.0+ (002-cli-vscode-tools)
 
 ## Recent Changes
 
+- 002-cli-vscode-tools: Added CLI tools (env-y-config, config-y-env) and VS Code extension for bidirectional conversion between schemas, .env files, and TypeScript types
 - enhance/001-and-support-for-array-values-when-env-value-has-th: Added array value support for comma-separated environment variables with automatic type coercion
 
 ---
