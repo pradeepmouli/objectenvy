@@ -205,12 +205,54 @@ A team manages multiple microservices with environment configuration for differe
 
 ---
 
+## Clarifications
+
+### Session 2026-01-05
+
+**5 critical clarifications completed**. All answers recorded below:
+
+1. **Q: Monorepo & Publishing Strategy** → **A: Option B**
+   - Single npm package for both CLI tools (`@envyconfig/tools`)
+   - Extension published separately to VS Code Marketplace
+   - Shared core library between CLIs to reduce duplication
+   - Enables independent versioning: CLI package can be updated without re-releasing extension
+
+2. **Q: Type Inference for Ambiguous Values** → **A: Option A**
+   - Conservative/Strict mode as default (`--strict` true)
+   - Ambiguous values always typed as `string` unless explicitly numeric format
+   - `--strict=false` enables smart heuristics for experienced users
+   - Prevents false type inferences that could cause runtime bugs
+   - Example: `PORT=5432` remains `string` in strict mode (user adds comment or uses `--type-hints` to convert)
+
+3. **Q: Error Recovery & Partial Files** → **A: Option A + D**
+   - **Atomic writes**: Write to temporary file, then move to target location
+   - **Pre-flight validation**: Check permissions, disk space, and input validity BEFORE writing
+   - If any step fails, target file remains untouched (no partial/corrupted files)
+   - Temporary files cleaned up automatically on tool exit
+   - Satisfies FR-014: "validate that output path is writable before attempting file generation"
+
+4. **Q: Sample Value Generation** → **A: Option C**
+   - Use explicit placeholder syntax: `<YOUR_API_KEY>`, `<DATABASE_PASSWORD>`, `<REDACTED>`
+   - Force developers to consciously fill actual values (prevents production leaks)
+   - Parse schema descriptions for context when available
+   - Example output: `DATABASE_HOST="<DATABASE_HOST>"` with comment `# Database hostname, e.g., localhost or db.example.com`
+   - Safe for templates and documentation without creating security risks
+
+5. **Q: Extension Settings Scope** → **A: Option C**
+   - Hierarchical: User settings as defaults, workspace settings override them
+   - User settings: `~/.config/Code/User/settings.json` (global across workspaces)
+   - Workspace settings: `.vscode/settings.json` (per-project configuration)
+   - Teams can commit `.vscode/settings.json` to enforce project-specific prefixes (e.g., `"envyconfig.prefix": "APP_"`)
+   - Aligns with VS Code extension best practices and matches ESLint/Prettier convention
+
+---
+
 ## Next Steps
 
-This specification is ready for:
+This specification is now **clarified and ready for planning**:
 
-1. **Quality Review**: Validate against the specification quality checklist
-2. **Clarification**: Address any clarification needs with stakeholders
-3. **Planning**: Create detailed task breakdown and implementation timeline
-4. **Implementation**: Follow established implementation guide to begin development
+1. ✅ **Clarification Complete**: 5 critical decisions documented
+2. **→ Planning Phase**: Create detailed task breakdown and implementation timeline using `/speckit.plan`
+3. **Implementation**: Teams can begin development with clear architectural decisions
+4. **Testing**: Use acceptance scenarios to create test cases
 
