@@ -105,7 +105,7 @@ export function createParseError(
   return new ConversionError(
     ErrorCategory.PARSE,
     EXIT_CODES.PARSE_ERROR,
-    `Failed to parse ${format} schema from ${filePath}`,
+    `Failed to parse ${format} schema from ${filePath}: ${reason}`,
     `Reason: ${reason}`,
     `Check the file syntax and ensure it contains a valid ${format} schema`
   );
