@@ -27,17 +27,10 @@ function inferType(value: unknown): 'string' | 'number' | 'boolean' | 'array' | 
 /**
  * Extract fields from a JSON object recursively
  */
-function extractFieldsFromObject(
-  obj: Record<string, unknown>,
-  depth: number = 0
-): SchemaField[] {
+function extractFieldsFromObject(obj: Record<string, unknown>, depth: number = 0): SchemaField[] {
   const maxDepth = 10;
   if (depth > maxDepth) {
-    throw createParseError(
-      'json',
-      'json',
-      `Object nesting exceeds maximum depth of ${maxDepth}`
-    );
+    throw createParseError('json', 'json', `Object nesting exceeds maximum depth of ${maxDepth}`);
   }
 
   const fields: SchemaField[] = [];
@@ -52,7 +45,12 @@ function extractFieldsFromObject(
     };
 
     // Extract nested fields for objects
-    if (fieldType === 'object' && value !== null && typeof value === 'object' && !Array.isArray(value)) {
+    if (
+      fieldType === 'object' &&
+      value !== null &&
+      typeof value === 'object' &&
+      !Array.isArray(value)
+    ) {
       const nestedObj = value as Record<string, unknown>;
       field.nested = extractFieldsFromObject(nestedObj, depth + 1);
     }

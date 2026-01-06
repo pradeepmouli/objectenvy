@@ -7,6 +7,7 @@ import { Command } from 'commander';
 import { readFileSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
+import { generateCommand } from './commands/generate.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const packageJson = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf-8'));
@@ -39,11 +40,7 @@ export async function cli(): Promise<void> {
     .option('--list-exports', 'List available exports (for TypeScript files)')
     .action(async (input, options) => {
       try {
-        // TODO: Implement command handler in Phase 3
-        // eslint-disable-next-line no-console
-        console.log(`env-y-config: ${input}`);
-        // eslint-disable-next-line no-console
-        console.log('Options:', options);
+        await generateCommand(input, options);
       } catch (error) {
         // eslint-disable-next-line no-console
         console.error('Error:', error instanceof Error ? error.message : String(error));

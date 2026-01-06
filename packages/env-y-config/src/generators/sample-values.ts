@@ -10,18 +10,27 @@ import type { SchemaField } from '../types.js';
  * Extract keywords from field name and description for placeholder generation
  */
 function extractKeywords(field: SchemaField): string[] {
-  const keywords: string[] = [];
   const name = field.name.toLowerCase();
 
-  // Keywords from field name
-  if (name.includes('host')) keywords.push('HOST');
-  if (name.includes('port')) keywords.push('PORT');
-  if (name.includes('key')) keywords.push('KEY');
-  if (name.includes('api')) keywords.push('API');
+  // Check for high-priority compound patterns in description first
+  if (field.description) {
+    const desc = field.description.toLowerCase();
+    // Special compound patterns that override field name
+    if (desc.includes('api key') || desc.includes('api_key')) {
+      return ['KEY']; // Return immediately for this specific pattern
+    }
+  }
+
+  // Keywords from field name - check more specific patterns first
+  const keywords: string[] = [];
   if (name.includes('url') || name.includes('uri')) keywords.push('URL');
   if (name.includes('password') || name.includes('pass')) keywords.push('PASSWORD');
   if (name.includes('token')) keywords.push('TOKEN');
   if (name.includes('secret')) keywords.push('SECRET');
+  if (name.includes('key')) keywords.push('KEY');
+  if (name.includes('host')) keywords.push('HOST');
+  if (name.includes('port')) keywords.push('PORT');
+  if (name.includes('api')) keywords.push('API');
   if (name.includes('user') || name.includes('username')) keywords.push('USERNAME');
   if (name.includes('email')) keywords.push('EMAIL');
   if (name.includes('database') || name.includes('db')) keywords.push('DATABASE');
@@ -31,19 +40,18 @@ function extractKeywords(field: SchemaField): string[] {
   if (name.includes('path')) keywords.push('PATH');
   if (name.includes('protocol')) keywords.push('PROTOCOL');
 
-  // Keywords from description
+  // Add description keywords as additional hints (not replacing field name keywords)
   if (field.description) {
     const desc = field.description.toLowerCase();
-    if (desc.includes('host')) keywords.push('HOST');
-    if (desc.includes('port')) keywords.push('PORT');
-    if (desc.includes('api key') || desc.includes('api_key')) keywords.push('KEY');
     if (desc.includes('url')) keywords.push('URL');
     if (desc.includes('password')) keywords.push('PASSWORD');
     if (desc.includes('token')) keywords.push('TOKEN');
     if (desc.includes('secret')) keywords.push('SECRET');
+    if (desc.includes('host')) keywords.push('HOST');
+    if (desc.includes('port')) keywords.push('PORT');
   }
 
-  // Remove duplicates while preserving order
+  // Remove duplicates while preserving order (field name keywords first)
   return Array.from(new Set(keywords));
 }
 
