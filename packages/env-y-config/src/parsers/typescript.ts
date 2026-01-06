@@ -139,6 +139,24 @@ export function listAvailableExports(sourceFile: SourceFile): string[] {
 }
 
 /**
+ * List available TypeScript exports from a file
+ *
+ * @param filePath - Path to TypeScript file
+ * @returns Array of export names with their types
+ *
+ * @example
+ * ```typescript
+ * const exports = await listTypeScriptExports('config.ts');
+ * // ['Config (interface)', 'Settings (type)']
+ * ```
+ */
+export async function listTypeScriptExports(filePath: string): Promise<string[]> {
+  const project = new Project();
+  const sourceFile = project.addSourceFileAtPath(filePath);
+  return listAvailableExports(sourceFile);
+}
+
+/**
  * Extract fields from interface or type declaration
  */
 function extractFields(
