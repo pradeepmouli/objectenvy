@@ -41,14 +41,14 @@ This plan breaks work into phases with independently testable user stories, stri
 - Story Goal: Core API and types work identically after moving to packages/objectenvy.
 - Independent Test Criteria: Unit + integration tests in Phase 2 pass; import paths resolve; behavior unchanged.
 
-- [ ] T020 [US1] Create package scaffold at packages/objectenvy/package.json
-- [ ] T021 [P] [US1] Create TS config at packages/objectenvy/tsconfig.json
-- [ ] T022 [US1] Move library sources from src/** to packages/objectenvy/src/
-- [ ] T023 [US1] Update public exports at packages/objectenvy/src/index.ts
-- [ ] T024 [US1] Update root pnpm-workspace.yaml to include packages/objectenvy
-- [ ] T025 [P] [US1] Update root tsconfig.json path aliases for objectenvy
-- [ ] T026 [US1] Update references in repository to new package name (primary file: packages/objectenvy/src/index.ts)
-- [ ] T027 [US1] Run tests to validate behavior in packages/objectenvy (pnpm -w test)
+@@- [X] T020 [US1] Create package scaffold at packages/objectenvy/package.json
+@@- [X] T021 [P] [US1] Create TS config at packages/objectenvy/tsconfig.json
+@@- [X] T022 [US1] Move library sources from src/** to packages/objectenvy/src/
+@@- [X] T023 [US1] Update public exports at packages/objectenvy/src/index.ts
+@@- [X] T024 [US1] Update root pnpm-workspace.yaml to include packages/objectenvy
+@@- [X] T025 [P] [US1] Update root tsconfig.json path aliases for objectenvy
+@@- [X] T026 [US1] Update references in repository to new package name (primary file: packages/objectenvy/src/index.ts)
+@@- [X] T027 [US1] Run tests to validate behavior in packages/objectenvy (pnpm -w test)
 
 ## Phase 4 — User Story 2: Unified CLI Parity (env-y-config + config-y-env)
 

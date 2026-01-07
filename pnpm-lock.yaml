@@ -104,6 +104,12 @@ importers:
         specifier: ^2.0.0
         version: 2.1.9(@types/node@20.19.27)
 
+  packages/objectenvy:
+    dependencies:
+      zod:
+        specifier: ^4.3.4
+        version: 4.3.4
+
   packages/vscode-envyconfig:
     devDependencies:
       '@types/node':
