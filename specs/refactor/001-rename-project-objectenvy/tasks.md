@@ -32,9 +32,9 @@ This plan breaks work into phases with independently testable user stories, stri
 
 ## Phase 2b — Baseline Capture (post critical tests)
 
-- [ ] T057 Capture baseline metrics in specs/refactor/001-rename-project-objectenvy/metrics-before.md
-- [ ] T058 Capture behavioral snapshot (inputs/outputs) in specs/refactor/001-rename-project-objectenvy/behavioral-snapshot.md
-- [ ] T059 Create git tag pre-refactor-001 after baseline capture
+- [X] T057 Capture baseline metrics in specs/refactor/001-rename-project-objectenvy/metrics-before.md
+- [X] T058 Capture behavioral snapshot (inputs/outputs) in specs/refactor/001-rename-project-objectenvy/behavioral-snapshot.md
+- [X] T059 Create git tag pre-refactor-001 after baseline capture
 
 ## Phase 3 — User Story 1: Core Library Behavior Preserved
 
