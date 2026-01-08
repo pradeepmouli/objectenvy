@@ -1,5 +1,5 @@
 {
-  "name": "@envyconfig/config-y-env",
+  "name": "@objectenvy/config-y-env-legacy",
   "version": "1.0.0",
   "description": "CLI tool to generate TypeScript types and schemas from .env files with smart type inference",
   "keywords": [

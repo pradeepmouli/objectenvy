@@ -1,6 +1,6 @@
 {
-  "name": "envyconfig",
-  "version": "0.2.0",
+  "name": "objectenvy",
+  "version": "1.0.0",
   "description": "Automatically map process.env to strongly-typed, nested config objects with camelCase fields",
   "keywords": [
     "config",

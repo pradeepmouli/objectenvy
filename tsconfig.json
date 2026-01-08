@@ -38,6 +38,6 @@
       "objectenvy/*": ["./packages/objectenvy/src/*"]
     }
   },
-  "include": ["src/**/*"],
+  "include": ["packages/**/*"],
   "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"]
 }
