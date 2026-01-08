@@ -1,5 +1,5 @@
 {
-  "name": "@envyconfig/env-y-config",
+  "name": "@objectenvy/env-y-config-legacy",
   "version": "1.0.0",
   "description": "CLI tool to generate .env files from schemas (Zod, JSON Schema, TypeScript, JSON)",
   "keywords": [

@@ -1,24 +1,23 @@
 {
-  "name": "@objectenvy/config-y-env-legacy",
+  "name": "objectenvy-cli",
   "version": "1.0.0",
-  "description": "CLI tool to generate TypeScript types and schemas from .env files with smart type inference",
+  "description": "Unified CLI for env-y-config and config-y-env under the objectenvy namespace",
   "keywords": [
     "env",
     "environment",
     "dotenv",
+    "configuration",
     "typescript",
-    "types",
+    "schema",
     "generator",
-    "inference",
-    "zod",
-    "json-schema",
-    "cli"
+    "cli",
+    "objectenvy"
   ],
   "license": "MIT",
   "author": "",
   "type": "module",
   "bin": {
-    "config-y-env": "./bin/config-y-env.js"
+    "objectenvy-cli": "./bin/objectenvy-cli.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -39,21 +38,14 @@
   },
   "dependencies": {
     "commander": "^12.0.0",
-    "ts-morph": "^21.0.1"
+    "ts-morph": "^21.0.1",
+    "objectenvy": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
     "tsx": "^4.7.0",
     "typescript": "^5.9.0",
     "vitest": "^2.0.0"
-  },
-  "peerDependencies": {
-    "zod": "^4.3.4"
-  },
-  "peerDependenciesMeta": {
-    "zod": {
-      "optional": true
-    }
   },
   "engines": {
     "node": ">=20.0.0"

@@ -1,14 +1,14 @@
 {
-  "name": "envyconfig-vscode",
-  "displayName": "EnvyConfig Tools",
+  "name": "objectenvy-vscode",
+  "displayName": "ObjectEnvy Tools",
   "description": "Convert between schemas, .env files, and TypeScript types with real-time preview",
   "version": "1.0.0",
-  "publisher": "envyconfig",
+  "publisher": "objectenvy",
   "icon": "media/icon.png",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/pradeepmouli/configenvy"
+    "url": "https://github.com/pradeepmouli/objectenvy"
   },
   "engines": {
     "vscode": "^1.85.0"
@@ -26,54 +26,54 @@
   "contributes": {
     "commands": [
       {
-        "command": "envyconfig.generateEnv",
+        "command": "objectenvy.generateEnv",
         "title": "Generate .env from Schema",
-        "category": "EnvyConfig"
+        "category": "ObjectEnvy"
       },
       {
-        "command": "envyconfig.generateTypes",
+        "command": "objectenvy.generateTypes",
         "title": "Generate Types from .env",
-        "category": "EnvyConfig"
+        "category": "ObjectEnvy"
       },
       {
-        "command": "envyconfig.quickConvert",
+        "command": "objectenvy.quickConvert",
         "title": "Quick Convert",
-        "category": "EnvyConfig"
+        "category": "ObjectEnvy"
       }
     ],
     "menus": {
       "explorer/context": [
         {
           "when": "resourceExtname == .env",
-          "command": "envyconfig.generateTypes",
-          "group": "envyconfig"
+          "command": "objectenvy.generateTypes",
+          "group": "objectenvy"
         },
         {
           "when": "resourceExtname == .ts || resourceExtname == .json",
-          "command": "envyconfig.generateEnv",
-          "group": "envyconfig"
+          "command": "objectenvy.generateEnv",
+          "group": "objectenvy"
         }
       ]
     },
     "configuration": {
-      "title": "EnvyConfig Tools",
+      "title": "ObjectEnvy Tools",
       "properties": {
-        "envyconfig.prefix": {
+        "objectenvy.prefix": {
           "type": "string",
           "default": "",
           "description": "Prefix for all generated environment variables"
         },
-        "envyconfig.strict": {
+        "objectenvy.strict": {
           "type": "boolean",
           "default": true,
           "description": "Use strict type inference mode"
         },
-        "envyconfig.includeComments": {
+        "objectenvy.includeComments": {
           "type": "boolean",
           "default": true,
           "description": "Include field descriptions as comments"
         },
-        "envyconfig.interfaceName": {
+        "objectenvy.interfaceName": {
           "type": "string",
           "default": "Config",
           "description": "Default interface name for generated types"

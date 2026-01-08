@@ -303,10 +303,10 @@ Contributions are welcome! Please see the main repository for guidelines.
 ## Related
 
 - [config-y-env](../config-y-env) - Generate TypeScript types from `.env` files
-- [vscode-envyconfig](../vscode-envyconfig) - VS Code extension
+- [objectenvy-vscode](../objectenvy-vscode) - VS Code extension
 
 ## Support
 
-- 🐛 [Report issues](https://github.com/pradeepmouli/configenvy/issues)
-- 💬 [Discussions](https://github.com/pradeepmouli/configenvy/discussions)
-- 📖 [Documentation](https://github.com/pradeepmouli/configenvy)
+- 🐛 [Report issues](https://github.com/pradeepmouli/objectenvy/issues)
+- 💬 [Discussions](https://github.com/pradeepmouli/objectenvy/discussions)
+- 📖 [Documentation](https://github.com/pradeepmouli/objectenvy)

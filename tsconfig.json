@@ -32,8 +32,12 @@
     "noPropertyAccessFromIndexSignature": true,
 
     "skipLibCheck": true,
-    "types": ["node"]
+    "types": ["node"],
+    "paths": {
+      "objectenvy": ["./packages/objectenvy/src/index.ts"],
+      "objectenvy/*": ["./packages/objectenvy/src/*"]
+    }
   },
-  "include": ["src/**/*"],
+  "include": ["packages/**/*"],
   "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"]
 }

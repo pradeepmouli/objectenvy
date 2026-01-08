@@ -1,0 +1,57 @@
+{
+  "name": "objectenvy",
+  "version": "1.0.0",
+  "description": "Automatically map process.env to strongly-typed, nested config objects with camelCase fields",
+  "keywords": [
+    "config",
+    "configuration",
+    "env",
+    "environment",
+    "typescript",
+    "type-safe",
+    "zod",
+    "nested",
+    "camelcase"
+  ],
+  "license": "MIT",
+  "author": "",
+  "type": "module",
+  "private": false,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx watch src/index.ts",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage",
+    "lint": "oxlint src",
+    "format": "oxfmt src",
+    "format:check": "oxfmt --check src",
+    "type-check": "tsc --noEmit -p tsconfig.json",
+    "clean": "rm -rf dist"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "peerDependencies": {
+    "zod": "^4.3.4"
+  },
+  "peerDependenciesMeta": {
+    "zod": {
+      "optional": true
+    }
+  }
+}

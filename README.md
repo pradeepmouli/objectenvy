@@ -1,6 +1,6 @@
-# envyconfig
+# objectenvy
 
-_Pronounced "env y config" (with y like Spanish "and")_
+_Pronounced "obj-ect en-vee config" - strongly-typed environment configuration for TypeScript projects_
 
 Automatically map `process.env` entries to strongly-typed config objects with camelCase fields and nested structures.
 
@@ -20,17 +20,17 @@ Automatically map `process.env` entries to strongly-typed config objects with ca
 ## Installation
 
 ```bash
-npm install envyconfig
+npm install objectenvy
 # or
-pnpm add envyconfig
+pnpm add objectenvy
 # or
-yarn add envyconfig
+yarn add objectenvy
 ```
 
 ## Quick Start
 
 ```typescript
-import { config } from 'envyconfig';
+import { config } from 'objectenvy';
 
 // Given these environment variables:
 // PORT_NUMBER=3000          <- single PORT_* entry, stays flat
@@ -60,7 +60,7 @@ const result = config();
 ### Basic Usage
 
 ```typescript
-import { config } from 'envyconfig';
+import { config } from 'objectenvy';
 
 // Load all environment variables
 const result = config();
@@ -77,10 +77,10 @@ const result = config({ prefix: 'APP' });
 
 ### With Zod Schema (Schema-Guided Nesting)
 
-When you provide a schema, envyconfig uses the schema structure to determine nesting. This gives you full control over the output shape:
+When you provide a schema, objectenvy uses the schema structure to determine nesting. This gives you full control over the output shape:
 
 ```typescript
-import { config } from 'envyconfig';
+import { config } from 'objectenvy';
 import { z } from 'zod';
 
 // The schema defines exactly how env vars map to your config
@@ -113,7 +113,7 @@ const result = config({ schema, prefix: 'APP' });
 ### Reusable Config Loader
 
 ```typescript
-import { createConfig } from 'envyconfig';
+import { createConfig } from 'objectenvy';
 import { z } from 'zod';
 
 const schema = z.object({
@@ -183,14 +183,14 @@ const testResult = loadConfig({ env: testEnv }); // Override env
 
 ## Type Utilities
 
-envyconfig exports type utilities to help with type-safe environment variable handling:
+objectenvy exports type utilities to help with type-safe environment variable handling:
 
 ### `ToEnv<T>`
 
 Convert a nested config type to a flat SCREAMING_SNAKE_CASE env record:
 
 ```typescript
-import type { ToEnv } from 'envyconfig';
+import type { ToEnv } from 'objectenvy';
 
 type Config = {
   portNumber: number;
@@ -213,7 +213,7 @@ type Env = ToEnv<Config>;
 Convert flat env keys to camelCase (uses type-fest's `CamelCasedPropertiesDeep`):
 
 ```typescript
-import type { FromEnv } from 'envyconfig';
+import type { FromEnv } from 'objectenvy';
 
 type Env = { PORT_NUMBER: string; LOG_LEVEL: string };
 type Config = FromEnv<Env>;
@@ -225,7 +225,7 @@ type Config = FromEnv<Env>;
 Add or remove prefixes from env keys:
 
 ```typescript
-import type { WithPrefix, WithoutPrefix } from 'envyconfig';
+import type { WithPrefix, WithoutPrefix } from 'objectenvy';
 
 type Env = { PORT: string; DEBUG: string };
 type PrefixedEnv = WithPrefix<Env, 'APP'>;
@@ -240,7 +240,7 @@ type Unprefixed = WithoutPrefix<PrefixedEnv, 'APP'>;
 Extract env type from a Zod schema's inferred type:
 
 ```typescript
-import type { SchemaToEnv } from 'envyconfig';
+import type { SchemaToEnv } from 'objectenvy';
 import { z } from 'zod';
 
 const schema = z.object({
