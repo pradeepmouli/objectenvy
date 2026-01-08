@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { z } from 'zod';
-import { objectify, objectEnvy, applyDefaults, merge } from './objectEnvy.js';
+import { objectify, objectEnvy, envy, applyDefaults, merge } from './objectEnvy.js';
 
 describe('objectify', () => {
   describe('basic mapping', () => {
@@ -733,3 +733,155 @@ describe('array value support', () => {
     });
   });
 });
+
+describe('envy (reverse transformation)', () => {
+  it('converts flat camelCase config to SCREAMING_SNAKE_CASE env', () => {
+    const config = {
+      port: 3000,
+      debug: true,
+      host: 'localhost'
+    };
+
+    const env = envy(config);
+    expect(env).toEqual({
+      PORT: '3000',
+      DEBUG: 'true',
+      HOST: 'localhost'
+    });
+  });
+
+  it('converts nested config to flattened SCREAMING_SNAKE_CASE env', () => {
+    const config = {
+      portNumber: 3000,
+      log: {
+        level: 'debug',
+        path: '/var/log'
+      }
+    };
+
+    const env = envy(config);
+    expect(env).toEqual({
+      PORT_NUMBER: '3000',
+      LOG_LEVEL: 'debug',
+      LOG_PATH: '/var/log'
+    });
+  });
+
+  it('converts deeply nested structures', () => {
+    const config = {
+      database: {
+        connection: {
+          host: 'localhost',
+          port: 5432
+        },
+        pool: {
+          min: 2,
+          max: 10
+        }
+      }
+    };
+
+    const env = envy(config);
+    expect(env).toEqual({
+      DATABASE_CONNECTION_HOST: 'localhost',
+      DATABASE_CONNECTION_PORT: '5432',
+      DATABASE_POOL_MIN: '2',
+      DATABASE_POOL_MAX: '10'
+    });
+  });
+
+  it('converts boolean values to string', () => {
+    const config = {
+      debug: true,
+      production: false,
+      verbose: true
+    };
+
+    const env = envy(config);
+    expect(env).toEqual({
+      DEBUG: 'true',
+      PRODUCTION: 'false',
+      VERBOSE: 'true'
+    });
+  });
+
+  it('converts arrays to comma-separated strings', () => {
+    const config = {
+      tags: ['api', 'v1', 'beta'],
+      hosts: ['host1', 'host2']
+    };
+
+    const env = envy(config);
+    expect(env).toEqual({
+      TAGS: 'api,v1,beta',
+      HOSTS: 'host1,host2'
+    });
+  });
+
+  it('handles mixed nested and array values', () => {
+    const config = {
+      server: {
+        port: 3000,
+        hosts: ['localhost', '127.0.0.1']
+      },
+      debug: false
+    };
+
+    const env = envy(config);
+    expect(env).toEqual({
+      SERVER_PORT: '3000',
+      SERVER_HOSTS: 'localhost,127.0.0.1',
+      DEBUG: 'false'
+    });
+  });
+
+  it('is reversible with objectify', () => {
+    const originalEnv = {
+      PORT: '3000',
+      HOST: 'localhost',
+      DEBUG: 'true'
+    };
+
+    const config = objectify({ env: originalEnv });
+    const recoveredEnv = envy(config);
+
+    expect(recoveredEnv).toEqual(originalEnv);
+  });
+
+  it('is reversible with nested structures', () => {
+    const originalEnv = {
+      PORT_NUMBER: '3000',
+      LOG_LEVEL: 'debug',
+      LOG_PATH: '/var/log'
+    };
+
+    const config = objectify({ env: originalEnv });
+    const recoveredEnv = envy(config);
+
+    expect(recoveredEnv).toEqual(originalEnv);
+  });
+
+  it('handles empty object', () => {
+    const config = {};
+    const env = envy(config);
+    expect(env).toEqual({});
+  });
+
+  it('handles null and undefined values', () => {
+    const config = {
+      port: 3000,
+      // null values should be skipped
+      nullValue: null as any,
+      // undefined values should be skipped
+      undefinedValue: undefined as any,
+      host: 'localhost'
+    };
+
+    const env = envy(config);
+    expect(env).toEqual({
+      PORT: '3000',
+      HOST: 'localhost'
+    });
+  });
+});
+

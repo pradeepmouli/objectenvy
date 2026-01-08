@@ -1,6 +1,7 @@
 export {
   objectify,
   objectEnvy,
+  envy,
   applyDefaults,
   merge
 } from './objectEnvy.js';

@@ -477,3 +477,77 @@ export function merge<T extends ConfigObject, U extends Partial<T>>(obj1: T, obj
   }
   return result;
 }
+
+/**
+ * Convert a configuration object back to environment variable format.
+ * Reverses the transformation done by objectify().
+ * Converts nested camelCase keys to flat SCREAMING_SNAKE_CASE env keys.
+ *
+ * @example
+ * const config = {
+ *   portNumber: 3000,
+ *   log: {
+ *     level: 'debug',
+ *     path: '/var/log'
+ *   }
+ * };
+ *
+ * const env = envy(config);
+ * // {
+ * //   PORT_NUMBER: '3000',
+ * //   LOG_LEVEL: 'debug',
+ * //   LOG_PATH: '/var/log'
+ * // }
+ */
+export function envy<T extends ConfigObject>(config: T): Record<string, string> {
+  const env: Record<string, string> = {};
+
+  function flatten(obj: ConfigValue, prefix = ''): void {
+    if (obj === null || obj === undefined) {
+      return;
+    }
+
+    if (Array.isArray(obj)) {
+      // Convert arrays to comma-separated strings
+      const stringValue = obj
+        .map((item) => {
+          if (typeof item === 'object') {
+            return JSON.stringify(item);
+          }
+          return String(item);
+        })
+        .join(',');
+      if (prefix) {
+        env[prefix] = stringValue;
+      }
+      return;
+    }
+
+    if (typeof obj === 'object') {
+      // Handle nested objects
+      for (const [key, value] of Object.entries(obj)) {
+        const screaming = toScreamingSnakeCase(key);
+        const newPrefix = prefix ? `${prefix}_${screaming}` : screaming;
+        flatten(value, newPrefix);
+      }
+      return;
+    }
+
+    // Handle primitives
+    if (prefix) {
+      env[prefix] = String(obj);
+    }
+  }
+
+  flatten(config);
+  return env;
+}
+
+/**
+ * Convert a camelCase string to SCREAMING_SNAKE_CASE
+ */
+function toScreamingSnakeCase(str: string): string {
+  return str
+    .replace(/([a-z0-9])([A-Z])/g, '$1_$2') // Insert underscore before uppercase letters
+    .toUpperCase();
+}
