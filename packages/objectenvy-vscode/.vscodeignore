@@ -1,0 +1,40 @@
+# Build artifacts
+src/**
+tests/**
+*.ts
+*.map
+!dist/**/*.js
+
+# Dependencies
+node_modules/**
+
+# Config files
+tsconfig.json
+vitest.config.ts
+.eslintrc.json
+.prettierrc
+.oxlintrc.json
+.oxfmtrc.json
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# CI/CD
+.github
+
+# VSCode
+.vscode
+.vscode-test
+
+# Misc
+*.log
+*.vsix
+*.tgz
+.DS_Store
+
+# Parent workspace files (don't package these)
+../../*
+../**
+
