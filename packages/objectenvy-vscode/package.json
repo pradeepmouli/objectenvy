@@ -2,7 +2,7 @@
   "name": "objectenvy-vscode",
   "displayName": "ObjectEnvy Tools",
   "description": "Convert between schemas, .env files, and TypeScript types with real-time preview",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publisher": "objectenvy",
   "license": "MIT",
   "repository": {
@@ -17,11 +17,21 @@
     "Other"
   ],
   "activationEvents": [
+    "onCommand:objectenvy.generateEnv",
+    "onCommand:objectenvy.generateTypes",
+    "onCommand:objectenvy.quickConvert",
     "onLanguage:typescript",
     "onLanguage:json",
     "workspaceContains:**/.env"
   ],
   "main": "./dist/extension.js",
+  "files": [
+    "dist/**/*.js",
+    "dist/**/*.d.ts",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
   "contributes": {
     "commands": [
       {
@@ -86,8 +96,8 @@
     "dev": "tsx watch src/extension.ts",
     "check:native": "tsgo --noEmit -p tsconfig.json",
     "test": "vitest",
-    "package": "vsce package",
-    "publish": "vsce publish",
+    "package": "vsce package --no-dependencies",
+    "publish": "vsce publish --no-dependencies",
     "lint": "oxlint src",
     "format": "oxfmt src",
     "format:check": "oxfmt --check src"

@@ -1,5 +1,11 @@
 # Change Log
 
+## 1.0.1
+
+### Patch Changes
+
+- fixes
+
 All notable changes to the "ObjectEnvy Tools" extension will be documented in this file.
 
 ## [1.0.0] - 2026-01-09
