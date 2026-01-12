@@ -11,6 +11,8 @@ Automatically map `process.env` entries to strongly-typed config objects with ca
 - **Smart Nesting** (without schema): Automatically nests when multiple entries share a prefix
   - `PORT_NUMBER=1234` → `{ portNumber: 1234 }` (single entry stays flat)
   - `LOG_LEVEL` + `LOG_PATH` → `{ log: { level: ..., path: ... } }` (multiple entries get nested)
+  - Non-nesting prefixes: Keys starting with `max`, `min`, `is`, `enable`, `disable` remain flat even when multiple entries share the prefix
+    - `MAX_CONNECTIONS`, `MAX_TIMEOUT` → `{ maxConnections, maxTimeout }` (no `max: { ... }` nesting)
 - **Type Coercion**: Automatically converts strings to numbers and booleans
 - **Prefix Filtering**: Only load variables with a specific prefix (e.g., `APP_`)
 - **Zod Validation**: Optional schema validation with full TypeScript type inference
@@ -148,6 +150,37 @@ const result = config({ delimiter: '__' });
 // Note: Single underscores become camelCase within the segment
 ```
 
+### Non-Nesting Prefixes (Smart Nesting)
+
+Some leading key segments are commonly used as qualifiers rather than grouping prefixes. To keep these flat, envyconfig avoids nesting when the first segment is one of:
+
+`max`, `min`, `is`, `enable`, `disable`
+
+This applies to smart nesting (when no schema is provided). Schema-guided nesting always follows the schema and is unaffected.
+
+```typescript
+// Given:
+// MAX_CONNECTIONS=100
+// MAX_TIMEOUT=30
+// IS_DEBUG=true
+// ENABLE_FEATURE_X=true
+// DISABLE_CACHE=false
+
+const result = config();
+
+// Result (flat keys):
+// {
+//   maxConnections: 100,
+//   maxTimeout: 30,
+//   isDebug: true,
+//   enableFeatureX: true,
+//   disableCache: false
+// }
+
+// You can customize the list:
+const custom = config({ nonNestingPrefixes: ['flag', 'has'] });
+```
+
 ### Disable Type Coercion
 
 ```typescript
@@ -170,6 +203,7 @@ Parse environment variables into a nested config object.
 | `schema` | `z.ZodType` | - | Zod schema for validation, type inference, and structure guidance |
 | `coerce` | `boolean` | `true` | Auto-convert strings to numbers/booleans |
 | `delimiter` | `string` | `'_'` | Delimiter for nesting (e.g., `'__'` for double underscore) |
+| `nonNestingPrefixes` | `string[]` | `['max','min','is','enable','disable']` | First segments that should never trigger nesting in smart mode. Does not apply when `schema` is provided. |
 
 ### `createConfig(defaultOptions)`
 

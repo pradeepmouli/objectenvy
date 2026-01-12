@@ -69,4 +69,13 @@ export interface ObjectEnvyOptions<T = ConfigObject> {
    * @default '_'
    */
   delimiter?: string;
+
+  /**
+   * Prefix segments that should not trigger nesting even when multiple entries share the prefix.
+   * For example, keys starting with 'max', 'min', 'is', 'enable', 'disable' will stay flat:
+   * MAX_CONNECTIONS, MAX_TIMEOUT -> { maxConnections, maxTimeout }
+   * IS_DEBUG, IS_VERBOSE -> { isDebug, isVerbose }
+   * @default ['max', 'min', 'is', 'enable', 'disable']
+   */
+  nonNestingPrefixes?: string[];
 }

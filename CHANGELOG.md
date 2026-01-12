@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.1.0 - 2026-01-11
+
+### Added
+
+- Smart array merging options in `objectenvy`:
+	- `arrayMergeStrategy: 'replace' | 'concat' | 'concat-unique'`
+	- Default remains `'replace'` for backward compatibility
+- Non-nesting prefixes in smart nesting (no schema):
+	- Keys starting with `max`, `min`, `is`, `enable`, `disable` remain flat even when multiple env vars share the prefix
+	- Example: `MAX_CONNECTIONS`, `MAX_TIMEOUT` → `{ maxConnections, maxTimeout }`
+
+### Notes
+
+- Schema-guided nesting remains unchanged and always follows the provided schema structure.
+
 ## 0.2.0
 
 ### Minor Changes

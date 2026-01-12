@@ -249,7 +249,12 @@ function buildConfig(
   env: NodeJS.ProcessEnv,
   options: Omit<ObjectEnvyOptions, 'schema'> = {}
 ): ConfigObject {
-  const { prefix, coerce = true, delimiter = '_' } = options;
+  const {
+    prefix,
+    coerce = true,
+    delimiter = '_',
+    nonNestingPrefixes = ['max', 'min', 'is', 'enable', 'disable']
+  } = options;
 
   // First pass: parse all entries and group by first segment
   const entries: ParsedEntry[] = [];
@@ -277,12 +282,15 @@ function buildConfig(
     const count = firstSegmentCounts.get(firstSegment) ?? 0;
     const finalValue: ConfigValue = coerce ? coerceValue(entry.value) : entry.value;
 
-    if (count === 1) {
-      // Only one entry with this prefix - flatten to camelCase
+    // Decide whether to nest based on count and non-nesting prefixes
+    const shouldNest = count > 1 && !nonNestingPrefixes.includes(firstSegment);
+
+    if (!shouldNest) {
+      // Flatten to camelCase
       const camelKey = segmentsToFlatCamelCase(entry.segments, delimiter);
       result[camelKey] = finalValue;
     } else {
-      // Multiple entries share this prefix - nest them
+      // Nest under shared prefix
       const path = segmentsToCamelCasePath(entry.segments, delimiter);
       setNestedValue(result, path, finalValue);
     }

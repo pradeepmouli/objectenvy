@@ -489,6 +489,67 @@ describe('objectify', () => {
       expect(config).toEqual({ port: 3000 });
     });
   });
+
+  it('does not nest for non-nesting prefixes (max)', () => {
+    const env = {
+      MAX_CONNECTIONS: '100',
+      MAX_TIMEOUT: '30'
+    };
+    const config = objectify({ env });
+    // Even though MAX_* appears multiple times, do not nest under 'max'
+    expect(config).toEqual({
+      maxConnections: 100,
+      maxTimeout: 30
+    });
+  });
+
+  it('does not nest for non-nesting prefixes (min)', () => {
+    const env = {
+      MIN_CONNECTIONS: '2',
+      MIN_TIMEOUT: '5'
+    };
+    const config = objectify({ env });
+    expect(config).toEqual({
+      minConnections: 2,
+      minTimeout: 5
+    });
+  });
+
+  it('does not nest for non-nesting prefixes (is)', () => {
+    const env = {
+      IS_DEBUG: 'true',
+      IS_VERBOSE: 'false'
+    };
+    const config = objectify({ env });
+    expect(config).toEqual({
+      isDebug: true,
+      isVerbose: false
+    });
+  });
+
+  it('does not nest for non-nesting prefixes (enable)', () => {
+    const env = {
+      ENABLE_FEATURE_X: 'true',
+      ENABLE_FEATURE_Y: 'false'
+    };
+    const config = objectify({ env });
+    expect(config).toEqual({
+      enableFeatureX: true,
+      enableFeatureY: false
+    });
+  });
+
+  it('does not nest for non-nesting prefixes (disable)', () => {
+    const env = {
+      DISABLE_CACHE: 'true',
+      DISABLE_LOGGING: 'false'
+    };
+    const config = objectify({ env });
+    expect(config).toEqual({
+      disableCache: true,
+      disableLogging: false
+    });
+  });
 });
 
 describe('objectEnvy (config loader factory)', () => {
