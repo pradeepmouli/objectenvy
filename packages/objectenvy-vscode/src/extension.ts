@@ -5,7 +5,13 @@
 
 import * as vscode from 'vscode';
 import { objectify, envy } from 'objectenvy';
-import { Project, SyntaxKind } from 'ts-morph';
+import {
+  Project,
+  SyntaxKind,
+  InterfaceDeclaration,
+  TypeAliasDeclaration,
+  TypeNode
+} from 'ts-morph';
 
 /**
  * Extension activation entry point
@@ -334,8 +340,10 @@ function parseTypeScriptToObject(input: string): any {
 /**
  * Extract fields from interface declaration
  */
-function extractFieldsFromInterface(iface: any): any {
-  const obj: any = {};
+function extractFieldsFromInterface(
+  iface: InterfaceDeclaration
+): Record<string, any> {
+  const obj: Record<string, any> = {};
 
   for (const prop of iface.getProperties()) {
     const name = prop.getName();
@@ -352,7 +360,9 @@ function extractFieldsFromInterface(iface: any): any {
 /**
  * Extract fields from type alias
  */
-function extractFieldsFromTypeAlias(typeAlias: any): any {
+function extractFieldsFromTypeAlias(
+  typeAlias: TypeAliasDeclaration
+): Record<string, any> {
   const typeNode = typeAlias.getTypeNode();
 
   if (!typeNode) {
@@ -360,7 +370,7 @@ function extractFieldsFromTypeAlias(typeAlias: any): any {
   }
 
   if (typeNode.getKind() === SyntaxKind.TypeLiteral) {
-    const obj: any = {};
+    const obj: Record<string, any> = {};
     const typeLiteral = typeNode.asKindOrThrow(SyntaxKind.TypeLiteral);
 
     for (const member of typeLiteral.getProperties()) {
@@ -383,7 +393,7 @@ function extractFieldsFromTypeAlias(typeAlias: any): any {
 /**
  * Infer a default value from a TypeScript type node
  */
-function inferDefaultValue(typeNode: any): any {
+function inferDefaultValue(typeNode: TypeNode): any {
   const typeText = typeNode.getText();
 
   // String type
@@ -408,7 +418,7 @@ function inferDefaultValue(typeNode: any): any {
 
   // Object/interface type literal
   if (typeNode.getKind() === SyntaxKind.TypeLiteral) {
-    const obj: any = {};
+    const obj: Record<string, any> = {};
     const typeLiteral = typeNode.asKindOrThrow(SyntaxKind.TypeLiteral);
 
     for (const member of typeLiteral.getProperties()) {
