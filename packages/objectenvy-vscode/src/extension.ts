@@ -6,8 +6,10 @@
 import * as vscode from 'vscode';
 import { objectify, envy } from 'objectenvy';
 import type { ConfigValue, ConfigObject } from 'objectenvy';
-import { Project, SyntaxKind } from 'ts-morph';
 import type {
+import {
+  Project,
+  SyntaxKind,
   InterfaceDeclaration,
   TypeAliasDeclaration,
   TypeNode
@@ -377,8 +379,10 @@ function parseTypeScriptToObject(input: string): ConfigObject {
 /**
  * Extract fields from interface declaration
  */
-function extractFieldsFromInterface(iface: InterfaceDeclaration): ConfigObject {
-  const obj: ConfigObject = {};
+function extractFieldsFromInterface(
+  iface: InterfaceDeclaration
+): Record<string, any> {
+  const obj: Record<string, any> = {};
 
   for (const prop of iface.getProperties()) {
     const name = prop.getName();
