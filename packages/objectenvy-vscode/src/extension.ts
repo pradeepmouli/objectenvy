@@ -203,8 +203,8 @@ async function handleGenerateTypes(outputChannel: vscode.OutputChannel): Promise
     }
 
     // Ensure .types.ts extension if user didn't include it
-    const finalFilename = filename.endsWith('.types.ts') ? filename : 
-      filename.replace(/\.ts$/, '.types.ts');
+    const finalFilename = filename.endsWith('.types.ts') ? filename :
+      filename.replace(/(\.[^\/\\]+)?\.ts$/, '.types.ts');
 
     // Create new .ts file
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
