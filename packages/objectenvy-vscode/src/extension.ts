@@ -5,6 +5,8 @@
 
 import * as vscode from 'vscode';
 import { objectify, envy } from 'objectenvy';
+import type { ConfigValue, ConfigObject } from 'objectenvy';
+import type {
 import {
   Project,
   SyntaxKind,
@@ -12,6 +14,56 @@ import {
   TypeAliasDeclaration,
   TypeNode
 } from 'ts-morph';
+
+/**
+ * Type guard to check if a value is a ConfigValue.
+ * This recursively validates arrays and nested objects.
+ */
+function isConfigValue(value: unknown): value is ConfigValue {
+  const type = typeof value;
+
+  // Primitive enviable values
+  if (type === 'string' || type === 'number' || type === 'boolean') {
+    return true;
+  }
+
+  // Arrays must contain only ConfigValue elements
+  if (Array.isArray(value)) {
+    return value.every(element => isConfigValue(element));
+  }
+
+  // Plain objects (non-null, non-array) whose values are ConfigValue
+  if (type === 'object' && value !== null) {
+    const obj = value as Record<string, unknown>;
+    return Object.values(obj).every(v => isConfigValue(v));
+  }
+
+  // All other types (undefined, function, symbol, bigint, etc.) are invalid
+  return false;
+}
+
+/**
+ * Type guard to check if value is a ConfigObject (EnviableObject)
+ * Validates that the value is a plain object (not array or null)
+ * and that all nested values conform to ConfigValue.
+ */
+function isConfigObject(value: unknown): value is ConfigObject {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return false;
+  }
+
+  const obj = value as Record<string, unknown>;
+  return Object.values(obj).every(v => isConfigValue(v));
+}
+
+/**
+ * Type guard to validate parsed intermediate object
+ */
+function assertConfigObject(value: unknown): asserts value is ConfigObject {
+  if (!isConfigObject(value)) {
+    throw new Error('Parsed value is not a valid ConfigObject');
+  }
+}
 
 /**
  * Extension activation entry point
@@ -94,7 +146,7 @@ async function handleGenerateEnv(outputChannel: vscode.OutputChannel): Promise<v
     outputChannel.appendLine(`Generating .env from: ${document.fileName}`);
 
     const content = document.getText();
-    let intermediateObj: any;
+    let intermediateObj: unknown;
 
     // Parse based on file extension
     if (['ts', 'tsx', 'js', 'jsx'].includes(ext)) {
@@ -104,6 +156,9 @@ async function handleGenerateEnv(outputChannel: vscode.OutputChannel): Promise<v
     } else {
       throw new Error(`Unsupported file type: ${ext}`);
     }
+
+    // Validate the parsed object
+    assertConfigObject(intermediateObj);
 
     // Convert to .env format
     const envVars = envy(intermediateObj);
@@ -266,7 +321,7 @@ async function handleConvertRequest(
     let output = '';
 
     // Parse input based on source format
-    let intermediateObj: any;
+    let intermediateObj: unknown;
 
     if (message.from === 'typescript') {
       intermediateObj = parseTypeScriptToObject(message.input);
@@ -289,6 +344,9 @@ async function handleConvertRequest(
     } else {
       throw new Error(`Unsupported input format: ${message.from}`);
     }
+
+    // Validate the parsed object
+    assertConfigObject(intermediateObj);
 
     // Convert to output format
     if (message.to === 'env') {
@@ -320,7 +378,7 @@ async function handleConvertRequest(
 /**
  * Parse TypeScript interface/type to object
  */
-function parseTypeScriptToObject(input: string): any {
+function parseTypeScriptToObject(input: string): ConfigObject {
   const project = new Project({ useInMemoryFileSystem: true });
   const sourceFile = project.createSourceFile('temp.ts', input);
 
@@ -360,9 +418,7 @@ function extractFieldsFromInterface(
 /**
  * Extract fields from type alias
  */
-function extractFieldsFromTypeAlias(
-  typeAlias: TypeAliasDeclaration
-): Record<string, any> {
+function extractFieldsFromTypeAlias(typeAlias: TypeAliasDeclaration): ConfigObject {
   const typeNode = typeAlias.getTypeNode();
 
   if (!typeNode) {
@@ -370,7 +426,7 @@ function extractFieldsFromTypeAlias(
   }
 
   if (typeNode.getKind() === SyntaxKind.TypeLiteral) {
-    const obj: Record<string, any> = {};
+    const obj: ConfigObject = {};
     const typeLiteral = typeNode.asKindOrThrow(SyntaxKind.TypeLiteral);
 
     for (const member of typeLiteral.getProperties()) {
@@ -393,7 +449,7 @@ function extractFieldsFromTypeAlias(
 /**
  * Infer a default value from a TypeScript type node
  */
-function inferDefaultValue(typeNode: TypeNode): any {
+function inferDefaultValue(typeNode: TypeNode): ConfigValue {
   const typeText = typeNode.getText();
 
   // String type
@@ -418,7 +474,7 @@ function inferDefaultValue(typeNode: TypeNode): any {
 
   // Object/interface type literal
   if (typeNode.getKind() === SyntaxKind.TypeLiteral) {
-    const obj: Record<string, any> = {};
+    const obj: ConfigObject = {};
     const typeLiteral = typeNode.asKindOrThrow(SyntaxKind.TypeLiteral);
 
     for (const member of typeLiteral.getProperties()) {
@@ -442,24 +498,26 @@ function inferDefaultValue(typeNode: TypeNode): any {
 /**
  * Convert object to TypeScript interface
  */
-function convertObjectToTypeScript(obj: any, interfaceName = 'Config'): string {
-  function getTypeString(value: any): string {
-    if (value === null || value === undefined) return 'any';
+function convertObjectToTypeScript(obj: ConfigObject, interfaceName = 'Config'): string {
+  function getTypeString(value: ConfigValue): string {
+    if (value === null || value === undefined) return 'unknown';
     if (typeof value === 'string') return 'string';
     if (typeof value === 'number') return 'number';
     if (typeof value === 'boolean') return 'boolean';
     if (Array.isArray(value)) {
-      if (value.length === 0) return 'any[]';
-      const firstType = getTypeString(value[0]);
+      if (value.length === 0) return 'unknown[]';
+      const firstElement = value[0];
+      if (firstElement === null || firstElement === undefined) return 'unknown[]';
+      const firstType = getTypeString(firstElement);
       return `${firstType}[]`;
     }
-    if (typeof value === 'object') {
+    if (typeof value === 'object' && isConfigObject(value)) {
       return generateNestedInterface(value);
     }
-    return 'any';
+    return 'unknown';
   }
 
-  function generateNestedInterface(obj: any, indent = '  '): string {
+  function generateNestedInterface(obj: ConfigObject, indent = '  '): string {
     const lines = ['{'];
     for (const [key, value] of Object.entries(obj)) {
       const typeStr = getTypeString(value);
