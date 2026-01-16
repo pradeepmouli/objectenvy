@@ -18,6 +18,7 @@
 import { config as dotenvConfig } from '@dotenvx/dotenvx';
 import { objectify, type ToEnv } from '../src/index.js';
 import { z } from 'zod';
+import { pathToFileURL } from 'url';
 
 
 // Load .env file
@@ -80,7 +81,7 @@ export function loadConfig(env?: ToEnv<AppConfig>): AppConfig {
 /**
  * Example usage
  */
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   try {
     const config = loadConfig();
 

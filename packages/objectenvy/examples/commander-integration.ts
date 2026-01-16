@@ -14,6 +14,7 @@
 import { Command } from 'commander';
 import { objectify, merge, override } from '../src/index.js';
 import { z } from 'zod';
+import { pathToFileURL } from 'url';
 
 // Define CLI options
 interface Options {
@@ -98,7 +99,7 @@ export function loadConfig(cliArgs: Options, env?: NodeJS.ProcessEnv): AppConfig
 /**
  * Example: CLI with commander
  */
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const program = new Command()
     .name('app')
     .description('Example app with objectenvy config')
