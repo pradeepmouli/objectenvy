@@ -191,8 +191,8 @@ async function handleGenerateTypes(outputChannel: vscode.OutputChannel): Promise
         if (!value) {
           return 'Filename cannot be empty';
         }
-        if (!/\.ts$/.test(value)) {
-          return 'Filename must end with .ts';
+        if (!/\.types\.ts$/.test(value)) {
+          return 'Filename must end with .types.ts';
         }
         return null;
       }
