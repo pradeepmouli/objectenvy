@@ -190,6 +190,34 @@ async function handleGenerateEnv(outputChannel: vscode.OutputChannel): Promise<v
 }
 
 /**
+ * Validates a filename for type generation
+ * @param value - The filename to validate
+ * @returns Error message if invalid, null if valid
+ */
+export function validateTypeFilename(value: string | undefined): string | null {
+  if (!value) {
+    return 'Filename cannot be empty';
+  }
+  if (!/\.types\.ts$/.test(value)) {
+    return 'Filename must end with .types.ts';
+  }
+  return null;
+}
+
+/**
+ * Normalizes a filename to ensure .types.ts extension
+ * @param filename - The filename to normalize
+ * @returns Normalized filename with .types.ts extension
+ */
+export function normalizeTypeFilename(filename: string): string {
+  if (filename.endsWith('.types.ts')) {
+    return filename;
+  }
+  // Replace any .ts suffix (including compound extensions like .d.ts) with .types.ts
+  return filename.replace(/(\.[^/\\]+)?\.ts$/, '.types.ts');
+}
+
+/**
  * Handle Generate Types from .env command
  */
 async function handleGenerateTypes(outputChannel: vscode.OutputChannel): Promise<void> {
@@ -242,6 +270,22 @@ async function handleGenerateTypes(outputChannel: vscode.OutputChannel): Promise
 
     const tsContent = convertObjectToTypeScript(configObj, interfaceName);
 
+    // Prompt for filename
+    const suggestedFilename = `${interfaceName.toLowerCase()}.types.ts`;
+    const filename = await vscode.window.showInputBox({
+      prompt: 'Enter filename for the generated types',
+      value: suggestedFilename,
+      placeHolder: suggestedFilename,
+      validateInput: validateTypeFilename
+    });
+
+    if (!filename) {
+      return; // User cancelled
+    }
+
+    // Ensure .types.ts extension if user didn't include it
+    const finalFilename = normalizeTypeFilename(filename);
+
     // Create new .ts file
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
     if (!workspaceFolder) {
@@ -249,7 +293,7 @@ async function handleGenerateTypes(outputChannel: vscode.OutputChannel): Promise
       return;
     }
 
-    const tsUri = vscode.Uri.joinPath(workspaceFolder.uri, `${interfaceName.toLowerCase()}.types.ts`);
+    const tsUri = vscode.Uri.joinPath(workspaceFolder.uri, finalFilename);
     const encoder = new TextEncoder();
     await vscode.workspace.fs.writeFile(tsUri, encoder.encode(tsContent));
 
