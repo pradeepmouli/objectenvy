@@ -5,7 +5,7 @@ describe('Module exports', () => {
   it('exports all main functions', () => {
     expect(objectenvy.objectify).toBeDefined();
     expect(objectenvy.objectEnvy).toBeDefined();
-    expect(objectenvy.applyDefaults).toBeDefined();
+    expect(objectenvy.override).toBeDefined();
     expect(objectenvy.merge).toBeDefined();
     expect(objectenvy.toCamelCase).toBeDefined();
     expect(objectenvy.toSnakeCase).toBeDefined();

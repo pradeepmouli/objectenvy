@@ -1,5 +1,16 @@
 # Change Log
 
+## 1.2.0
+
+### Minor Changes
+
+- cleanup
+
+### Patch Changes
+
+- Updated dependencies
+  - objectenvy@1.3.0
+
 ## 1.0.1
 
 ### Patch Changes

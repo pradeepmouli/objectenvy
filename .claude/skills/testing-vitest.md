@@ -707,6 +707,28 @@ describe.only('Only this suite', () => {
 
 ## Best Practices
 
+### 0. Test Only Public APIs
+
+Focus tests on **public interfaces only**:
+
+- Test exported functions, classes, and methods
+- Don't test private/internal implementation details
+- Test behavior, not implementation
+- If you need to test internals, consider if they should be public or extracted
+
+```typescript
+// Good: Test public API behavior
+it('should return user by ID', async () => {
+  const user = await userService.getUser('123');
+  expect(user.id).toBe('123');
+});
+
+// Bad: Testing internal caching mechanism
+it('should cache users internally', () => {
+  // Don't test private #cache implementation
+});
+```
+
 ### 1. Test Organization
 
 - Group related tests in `describe` blocks

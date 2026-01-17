@@ -59,12 +59,12 @@ async function parseInputFile(
       return await parseTypeScriptFile(filePath, exportName);
 
     case 'json-schema':
-      // TODO: Implement JSON Schema parser (Phase 3)
-      throw new Error('JSON Schema format not yet implemented');
+      // JSON Schema support is planned for a future release
+      throw new Error('JSON Schema format is not yet supported. Use TypeScript or JSON instead.');
 
     case 'zod':
-      // TODO: Implement Zod parser (Phase 3)
-      throw new Error('Zod format not yet implemented');
+      // Zod schema extraction support is planned for a future release
+      throw new Error('Zod format is not yet supported. Use TypeScript or JSON instead.');
 
     default:
       throw new Error(`Unsupported format: ${format}`);

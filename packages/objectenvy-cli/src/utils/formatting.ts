@@ -4,6 +4,7 @@
  */
 
 import type { EnvEntry } from '../types.js';
+import { toSnakeCase } from 'objectenvy';
 
 /**
  * Convert field name to SCREAMING_SNAKE_CASE
@@ -11,17 +12,8 @@ import type { EnvEntry } from '../types.js';
 export function toEnvKey(fieldName: string): string {
   return fieldName
     .split('.')
-    .map((part) => toScreamingSnakeCase(part))
+    .map((part) => toSnakeCase(part))
     .join('_');
-}
-
-/**
- * Convert string to SCREAMING_SNAKE_CASE
- */
-export function toScreamingSnakeCase(str: string): string {
-  return str
-    .replace(/([a-z])([A-Z])/g, '$1_$2') // camelCase to snake_case
-    .toUpperCase();
 }
 
 /**

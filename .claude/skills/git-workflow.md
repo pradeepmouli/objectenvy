@@ -605,7 +605,7 @@ In `package.json`:
       "oxfmt"
     ],
     "*.{json,md}": [
-      "prettier --write"
+      "oxfmt"
     ]
   }
 }

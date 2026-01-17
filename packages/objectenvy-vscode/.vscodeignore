@@ -1,0 +1,16 @@
+**/*.ts
+**/*.map
+.gitignore
+.editorconfig
+tsconfig.json
+vitest.config.ts
+*.log
+node_modules/
+src/
+tests/
+*.vsix
+.vscode/
+.DS_Store
+pnpm-lock.yaml
+../../**
+../**

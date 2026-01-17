@@ -1,7 +1,8 @@
-import type { z } from 'zod';
-import type { EnvSource, ObjectEnvyOptions, ConfigObject, ConfigValue, MergeOptions, ArrayMergeStrategy } from './types.js';
+import type { z, ZodObject } from 'zod';
+import type { EnvLike, ObjectEnvyOptions, EnviableObject, EnviableValue, MergeOptions } from './types.js';
 import { coerceValue, setNestedValue } from './utils.js';
 import type { ToEnv, FromEnv } from './typeUtils.js';
+import type { Merge } from 'type-fest';
 
 interface ParsedEntry {
   key: string;
@@ -13,6 +14,31 @@ interface ParsedEntry {
 interface SchemaPath {
   path: string[];
   pathKey: string; // joined path for lookup, e.g., "log.level"
+}
+
+/**
+ * Check if a field should be included based on include/exclude patterns
+ */
+function shouldIncludeField(
+  normalizedKey: string,
+  include?: string[],
+  exclude?: string[]
+): boolean {
+  const lowerKey = normalizedKey.toLowerCase();
+
+  // If include list is specified, key must match at least one pattern
+  if (include && include.length > 0) {
+    const matches = include.some((pattern) => lowerKey.includes(pattern.toLowerCase()));
+    if (!matches) return false;
+  }
+
+  // If exclude list is specified, key must not match any pattern
+  if (exclude && exclude.length > 0) {
+    const matches = exclude.some((pattern) => lowerKey.includes(pattern.toLowerCase()));
+    if (matches) return false;
+  }
+
+  return true;
 }
 
 /**
@@ -248,12 +274,14 @@ function findMatchingSchemaPath(
 function buildConfig(
   env: NodeJS.ProcessEnv,
   options: Omit<ObjectEnvyOptions, 'schema'> = {}
-): ConfigObject {
+): EnviableObject {
   const {
     prefix,
     coerce = true,
     delimiter = '_',
-    nonNestingPrefixes = ['max', 'min', 'is', 'enable', 'disable']
+    nonNestingPrefixes = ['max', 'min', 'is', 'enable', 'disable'],
+    include,
+    exclude
   } = options;
 
   // First pass: parse all entries and group by first segment
@@ -266,6 +294,9 @@ function buildConfig(
     const normalizedKey = stripPrefix(key, prefix, delimiter);
     if (normalizedKey === null) continue;
 
+    // Apply include/exclude filtering
+    if (!shouldIncludeField(normalizedKey, include, exclude)) continue;
+
     const segments = splitKey(normalizedKey, delimiter);
     if (segments.length === 0) continue;
 
@@ -275,12 +306,12 @@ function buildConfig(
   }
 
   // Second pass: build config with smart nesting
-  const result: ConfigObject = {};
+  const result: EnviableObject = {};
 
   for (const entry of entries) {
     const firstSegment = entry.segments[0]!.toLowerCase();
     const count = firstSegmentCounts.get(firstSegment) ?? 0;
-    const finalValue: ConfigValue = coerce ? coerceValue(entry.value) : entry.value;
+    const finalValue: EnviableValue = coerce ? coerceValue(entry.value) : entry.value;
 
     // Decide whether to nest based on count and non-nesting prefixes
     const shouldNest = count > 1 && !nonNestingPrefixes.includes(firstSegment);
@@ -306,8 +337,8 @@ function buildConfigWithSchema(
   env: NodeJS.ProcessEnv,
   schema: unknown,
   options: Omit<ObjectEnvyOptions, 'schema'> = {}
-): ConfigObject {
-  const { prefix, coerce = true, delimiter = '_' } = options;
+): EnviableObject {
+  const { prefix, coerce = true, delimiter = '_', include, exclude } = options;
 
   // Extract all paths from schema
   const schemaPathList = extractSchemaPaths(schema);
@@ -316,7 +347,7 @@ function buildConfigWithSchema(
     schemaPaths.set(sp.pathKey, sp.path);
   }
 
-  const result: ConfigObject = {};
+  const result: EnviableObject = {};
 
   for (const [key, value] of Object.entries(env)) {
     if (value === undefined) continue;
@@ -324,10 +355,13 @@ function buildConfigWithSchema(
     const normalizedKey = stripPrefix(key, prefix, delimiter);
     if (normalizedKey === null) continue;
 
+    // Apply include/exclude filtering
+    if (!shouldIncludeField(normalizedKey, include, exclude)) continue;
+
     const segments = splitKey(normalizedKey, delimiter);
     if (segments.length === 0) continue;
 
-    const finalValue: ConfigValue = coerce ? coerceValue(value) : value;
+    const finalValue: EnviableValue = coerce ? coerceValue(value) : value;
 
     // Try to find a matching schema path
     const matchedPath = findMatchingSchemaPath(segments, schemaPaths, delimiter);
@@ -385,19 +419,19 @@ function buildConfigWithSchema(
  * const config = objectify({ schema });
  * // Returns typed config without validation
  */
-export function objectify(): ConfigObject;
+export function objectify<T extends EnviableObject>(): T;
 export function objectify(
   options: Omit<ObjectEnvyOptions, 'schema' | 'env'> & { env?: undefined }
-): ConfigObject;
-export function objectify<E extends EnvSource>(
+): EnviableObject;
+export function objectify<E extends EnvLike>(
   options: Omit<ObjectEnvyOptions, 'schema'> & { env: E }
 ): FromEnv<E>;
-export function objectify<T extends ConfigObject>(
-  options: ObjectEnvyOptions<T> & { schema: z.ZodObject<any> | T }
-): T;
-export function objectify<T extends ConfigObject = ConfigObject>(
+export function objectify<T extends ZodObject>(
+  options: ObjectEnvyOptions<z.infer<T>> & { schema: T}
+): z.infer<T>;
+export function objectify<T extends EnviableObject = EnviableObject>(
   options: ObjectEnvyOptions<T> = {}
-): T | ConfigObject {
+): T | EnviableObject {
   const env = (options.env ?? process.env) as Record<string, string | undefined>;
 
   if (options.schema) {
@@ -435,23 +469,23 @@ export function objectify<T extends ConfigObject = ConfigObject>(
 export function objectEnvy(
   defaultOptions: Omit<ObjectEnvyOptions, 'schema'>
 ): {
-  objectify: (overrides?: Partial<Omit<ObjectEnvyOptions, 'schema'>>) => ConfigObject;
+  objectify: (overrides?: Partial<Omit<ObjectEnvyOptions, 'schema'>>) => EnviableObject;
   envy: typeof envy;
 };
-export function objectEnvy<T extends ConfigObject>(
+export function objectEnvy<T extends EnviableObject>(
   defaultOptions: ObjectEnvyOptions<T> & { schema: z.ZodObject<any> | T }
 ): {
   objectify: (overrides?: Partial<Omit<ObjectEnvyOptions<T>, 'schema'>>) => T;
   envy: typeof envy;
 };
-export function objectEnvy<T extends ConfigObject = ConfigObject>(
+export function objectEnvy<T extends EnviableObject = EnviableObject>(
   defaultOptions: ObjectEnvyOptions<T>
 ): {
-  objectify: (overrides?: Partial<Omit<ObjectEnvyOptions<T>, 'schema'>>) => T | ConfigObject;
+  objectify: (overrides?: Partial<Omit<ObjectEnvyOptions<T>, 'schema'>>) => T | EnviableObject;
   envy: typeof envy;
 } {
   // Create a memoization cache for this specific objectEnvy instance
-  const cache = new WeakMap<NodeJS.ProcessEnv, Map<string, ConfigObject>>();
+  const cache = new WeakMap<NodeJS.ProcessEnv, Map<string, EnviableObject>>();
 
   const objectifyFn = (overrides: Partial<Omit<ObjectEnvyOptions<T>, 'schema'>> = {}) => {
     const mergedOptions = { ...defaultOptions, ...overrides };
@@ -468,24 +502,24 @@ export function objectEnvy<T extends ConfigObject = ConfigObject>(
     // Check cache
     let envCache = cache.get(env);
     if (!envCache) {
-      envCache = new Map<string, ConfigObject>();
+      envCache = new Map<string, EnviableObject>();
       cache.set(env, envCache);
     }
 
     if (envCache.has(optionsKey)) {
-      return envCache.get(optionsKey)! as T | ConfigObject;
+      return envCache.get(optionsKey)! as T | EnviableObject;
     }
 
     // Compute result using objectify
-    const result: ConfigObject = 'schema' in mergedOptions && mergedOptions.schema
-      ? objectify({ ...mergedOptions, schema: mergedOptions.schema } as ObjectEnvyOptions<ConfigObject> & { schema: z.ZodObject<any> | ConfigObject })
+    const result: EnviableObject = ('schema' in mergedOptions && mergedOptions.schema
+      ? objectify<z.ZodObject<any>>({ ...mergedOptions, schema: mergedOptions.schema } as ObjectEnvyOptions<EnviableObject> & { schema: z.ZodObject<any> } as any)
       : mergedOptions.env
-        ? objectify({ ...mergedOptions, env: mergedOptions.env } as ObjectEnvyOptions<ConfigObject> & { env: EnvSource })
-        : objectify({ prefix: mergedOptions.prefix, coerce: mergedOptions.coerce, delimiter: mergedOptions.delimiter });
+        ? objectify({ ...mergedOptions, env: mergedOptions.env } as ObjectEnvyOptions<EnviableObject> & { env: EnvLike })
+        : objectify({ prefix: mergedOptions.prefix, coerce: mergedOptions.coerce, delimiter: mergedOptions.delimiter })) as EnviableObject;
 
     // Cache the result
     envCache.set(optionsKey, result);
-    return result as T | ConfigObject;
+    return result as T | EnviableObject;
   };
 
   return {
@@ -495,28 +529,28 @@ export function objectEnvy<T extends ConfigObject = ConfigObject>(
 }
 
 /**
- * Recursively apply default values to a config object with smart array handling
- * @param config The configuration object to apply defaults to
- * @param defaults The default values to apply
+ * Recursively override default values with a config object with smart array handling
+ * @param defaults The default values to start with
+ * @param config The configuration object to override defaults
  * @param options Merge options including array merge strategy
- * @returns The config with defaults applied
+ * @returns The defaults with config overrides applied
  *
  * @example
- * const config = { log: { level: 'debug' } };
  * const defaults = { port: 3000, log: { level: 'info', path: '/var/log' } };
- * const finalConfig = apply(config, defaults);
+ * const config = { log: { level: 'debug' } };
+ * const finalConfig = override(defaults, config);
  * // finalConfig = { port: 3000, log: { level: 'debug', path: '/var/log' } }
  *
  * @example
  * // Concatenate arrays instead of replacing
- * const config = { tags: ['prod'] };
  * const defaults = { port: 3000, tags: ['v1'] };
- * const finalConfig = apply(config, defaults, { arrayMergeStrategy: 'concat' });
+ * const config = { tags: ['prod'] };
+ * const finalConfig = override(defaults, config, { arrayMergeStrategy: 'concat' });
  * // finalConfig = { port: 3000, tags: ['prod', 'v1'] }
  */
-export function apply<T extends ConfigObject>(
-  config: Partial<T>,
+export function override<T extends EnviableObject>(
   defaults: T,
+  config: Partial<T>,
   options: MergeOptions = {}
 ): T {
   const { arrayMergeStrategy = 'replace' } = options;
@@ -575,9 +609,9 @@ export function apply<T extends ConfigObject>(
       !Array.isArray(result[key])
     ) {
       // Recursively apply defaults for nested objects
-      result[key] = apply(
-        result[key] as Partial<ConfigObject>,
-        value as ConfigObject,
+      result[key] = override(
+        value as EnviableObject,
+        result[key] as Partial<EnviableObject>,
         options
       );
     }
@@ -613,11 +647,11 @@ export function apply<T extends ConfigObject>(
  * const merged = merge(config1, config2, { arrayMergeStrategy: 'concat-unique' });
  * // merged = { hosts: ['localhost', 'example.com', 'api.example.com'] }
  */
-export function merge<T extends ConfigObject, U extends ConfigObject>(
+export function merge<T extends EnviableObject, U extends EnviableObject>(
   obj1: T,
   obj2: U,
   options: MergeOptions = {}
-): T & U {
+): Merge<T,U> {
   const { arrayMergeStrategy = 'replace' } = options;
 
   function mergeArrays(arr1: unknown[], arr2: unknown[]): unknown[] {
@@ -676,7 +710,7 @@ export function merge<T extends ConfigObject, U extends ConfigObject>(
       !Array.isArray(result[key])
     ) {
       // Both are objects - recursively merge
-      result[key] = merge(result[key] as ConfigObject, value as ConfigObject, options);
+      result[key] = merge(result[key] as EnviableObject, value as EnviableObject, options);
     } else {
       // For all other cases (arrays with non-arrays, primitives, etc.), override
       result[key] = value;
@@ -706,10 +740,10 @@ export function merge<T extends ConfigObject, U extends ConfigObject>(
  * //   LOG_PATH: '/var/log'
  * // }
  */
-export function envy<T extends ConfigObject>(config: T): ToEnv<T> {
+export function envy<T extends EnviableObject>(config: T): ToEnv<T> {
   const env: Record<string, string> = {};
 
-  function flatten(obj: ConfigValue, prefix = ''): void {
+  function flatten(obj: EnviableValue, prefix = ''): void {
     if (obj === null || obj === undefined) {
       return;
     }

@@ -522,6 +522,136 @@ jobs:
 
 Configure at: pypi.org → Project → Publishing → Add a new publisher
 
+### Automatic Release Tagging
+
+Create GitHub releases automatically based on package.json versions:
+
+```yaml
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'package.json'
+      - 'packages/*/package.json'
+
+jobs:
+  tag-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version from package.json
+        id: version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+          # Check if pre-release
+          if [[ "$VERSION" == *"-"* ]]; then
+            echo "prerelease=true" >> $GITHUB_OUTPUT
+          else
+            echo "prerelease=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check if tag exists
+        id: check
+        run: |
+          if git rev-parse "v${{ steps.version.outputs.version }}" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Release
+        if: steps.check.outputs.exists == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const version = '${{ steps.version.outputs.version }}';
+            const isPrerelease = ${{ steps.version.outputs.prerelease }};
+
+            await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: `v${version}`,
+              name: `v${version}`,
+              prerelease: isPrerelease,
+              generate_release_notes: true
+            });
+```
+
+### Monorepo Multi-Package Tagging
+
+For monorepos with multiple packages, use `<package-name>-v<version>` format:
+
+```yaml
+name: Release Packages
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Find changed packages and create releases
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            const packagesDir = './packages';
+            const packages = fs.readdirSync(packagesDir);
+
+            for (const pkg of packages) {
+              const pkgJsonPath = path.join(packagesDir, pkg, 'package.json');
+              if (!fs.existsSync(pkgJsonPath)) continue;
+
+              const pkgJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
+              const version = pkgJson.version;
+              const tagName = `${pkg}-v${version}`;
+              const isPrerelease = version.includes('-');
+
+              // Check if tag exists
+              try {
+                await github.rest.git.getRef({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  ref: `tags/${tagName}`
+                });
+                console.log(`Tag ${tagName} already exists, skipping`);
+                continue;
+              } catch (e) {
+                // Tag doesn't exist, create release
+              }
+
+              await github.rest.repos.createRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag_name: tagName,
+                name: `${pkg} v${version}`,
+                prerelease: isPrerelease,
+                generate_release_notes: true
+              });
+
+              console.log(`Created release: ${tagName}`);
+            }
+```
+
 ### Provenance Attestation
 Provenance links published packages to their source:
 ```yaml

@@ -63,12 +63,44 @@ objectify({ env, nonNestingPrefixes: ['flag', 'has'] });
 
 Schema-guided nesting is unaffected and always follows your schema.
 
+## Field Filtering
+
+Filter environment variables by including or excluding specific patterns:
+
+```ts
+const env = {
+  DATABASE_HOST: 'localhost',
+  DATABASE_PORT: '5432',
+  DATABASE_PASSWORD: 'secret',
+  API_KEY: 'key123',
+  PORT: '3000'
+};
+
+// Include only database-related variables
+const dbConfig = objectify({ env, include: ['database'] });
+// { database: { host: 'localhost', port: 5432, password: 'secret' } }
+
+// Exclude sensitive variables
+const safeConfig = objectify({ env, exclude: ['password', 'secret'] });
+// { database: { host: 'localhost', port: 5432 }, apiKey: 'key123', port: 3000 }
+
+// Combine prefix with filtering
+const config = objectify({
+  env,
+  prefix: 'APP',
+  include: ['database'],
+  exclude: ['password']
+});
+```
+
+Filtering is case-insensitive and matches against the normalized camelCase key.
+
 ## Smart Array Merging
 
 When merging or applying defaults to config objects, choose how arrays are handled:
 
 ```ts
-import { merge, apply } from 'objectenvy';
+import { merge, override } from 'objectenvy';
 
 const base = { tags: ['prod'], server: { hosts: ['host1'] } };
 const next = { tags: ['v1'], server: { hosts: ['host2'] } };
@@ -85,7 +117,7 @@ merge(base, next, { arrayMergeStrategy: 'concat-unique' });
 // { tags: ['prod','v1'], server: { hosts: ['host1','host2'] } }
 
 // Apply defaults with the same strategies
-apply({ tags: ['prod'] }, { tags: ['v1'] }, { arrayMergeStrategy: 'concat' });
+override({ tags: ['v1'] }, { tags: ['prod'] }, { arrayMergeStrategy: 'concat' });
 ```
 
 ## Schema-Guided Nesting (Optional)
@@ -112,10 +144,10 @@ const config = objectify({ env, schema });
 ## API
 
 - `objectify(options)` → parse env to config
-  - Options: `env`, `prefix`, `schema`, `coerce`, `delimiter`, `nonNestingPrefixes`
+  - Options: `env`, `prefix`, `schema`, `coerce`, `delimiter`, `nonNestingPrefixes`, `include`, `exclude`
 - `merge(obj1, obj2, options?)` → deep merge with array strategies
   - Options: `{ arrayMergeStrategy?: 'replace' | 'concat' | 'concat-unique' }`
-- `apply(config, defaults, options?)` → apply defaults with array strategies
+- `override(defaults, config, options?)` → override defaults with config using array strategies
   - Options: `{ arrayMergeStrategy?: 'replace' | 'concat' | 'concat-unique' }`
 - `envy(config)` → reverse to SCREAMING_SNAKE_CASE env
 

@@ -1,6 +1,4 @@
-# envyconfig
-
-_Pronounced "env y config" (with y like Spanish "and")_
+# objectenvy
 
 Automatically map `process.env` entries to strongly-typed config objects with camelCase fields and nested structures.
 
@@ -22,11 +20,11 @@ Automatically map `process.env` entries to strongly-typed config objects with ca
 ## Installation
 
 ```bash
-npm install envyconfig
+npm install objectenvy
 # or
-pnpm add envyconfig
+pnpm add objectenvy
 # or
-yarn add envyconfig
+yarn add objectenvy
 ```
 
 ## Quick Start
@@ -41,7 +39,7 @@ import { config } from 'envyconfig';
 // DATABASE_HOST=localhost   <- multiple DATABASE_* entries, gets nested
 // DATABASE_PORT=5432
 
-const result = config();
+const result = objectify({ env: process.env });
 
 // Result:
 // {
@@ -62,27 +60,27 @@ const result = config();
 ### Basic Usage
 
 ```typescript
-import { config } from 'envyconfig';
+import { objectify } from 'objectenvy';
 
 // Load all environment variables
-const result = config();
+const result = objectify({ env: process.env });
 ```
 
 ### With Prefix Filtering
 
 ```typescript
 // Given: APP_PORT=3000, APP_DEBUG=true, OTHER_VAR=ignored
-const result = config({ prefix: 'APP' });
+const result = objectify({ env: process.env, prefix: 'APP' });
 
 // Result: { port: 3000, debug: true }
 ```
 
 ### With Zod Schema (Schema-Guided Nesting)
 
-When you provide a schema, envyconfig uses the schema structure to determine nesting. This gives you full control over the output shape:
+When you provide a schema, objectenvy uses the schema structure to determine nesting. This gives you full control over the output shape:
 
 ```typescript
-import { config } from 'envyconfig';
+import { buildConfigWithSchema } from 'objectenvy';
 import { z } from 'zod';
 
 // The schema defines exactly how env vars map to your config
@@ -100,7 +98,7 @@ const schema = z.object({
 });
 
 // Given: PORT_NUMBER=3000, LOG_LEVEL=debug, LOG_PATH=/var/log, DATABASE_HOST=localhost, DATABASE_PORT=5432
-const result = config({ schema, prefix: 'APP' });
+const result = buildConfigWithSchema({ env: process.env, schema, prefix: 'APP' });
 
 // Result matches schema structure exactly:
 // {
@@ -112,30 +110,20 @@ const result = config({ schema, prefix: 'APP' });
 // TypeScript knows: result.portNumber is number, result.log.level is 'debug' | 'info' | 'warn' | 'error'
 ```
 
-### Reusable Config Loader
+### Merging Configurations
 
 ```typescript
-import { createConfig } from 'envyconfig';
-import { z } from 'zod';
+import { override } from 'objectenvy';
 
-const schema = z.object({
-  port: z.number(),
-  debug: z.boolean()
-});
+const defaults = {
+  port: 3000,
+  debug: false
+};
 
-// Create a reusable loader with preset options
-const loadConfig = createConfig({
-  prefix: 'APP',
-  schema
-});
+const envConfig = objectify({ env: process.env, prefix: 'APP' });
 
-// Use in your app
-const result = loadConfig();
-
-// Override for testing
-const testResult = loadConfig({
-  env: { APP_PORT: '3000', APP_DEBUG: 'true' }
-});
+// Override defaults with environment config
+const result = override(defaults, envConfig);
 ```
 
 ### Custom Delimiter for Nesting
@@ -144,7 +132,7 @@ By default, each underscore creates a new nesting level. Use `delimiter: '__'` f
 
 ```typescript
 // Given: LOG__LEVEL=debug, LOG__FILE_PATH=/var/log
-const result = config({ delimiter: '__' });
+const result = objectify({ env: process.env, delimiter: '__' });
 
 // Result: { log: { level: 'debug', filePath: '/var/log' } }
 // Note: Single underscores become camelCase within the segment
@@ -152,7 +140,7 @@ const result = config({ delimiter: '__' });
 
 ### Non-Nesting Prefixes (Smart Nesting)
 
-Some leading key segments are commonly used as qualifiers rather than grouping prefixes. To keep these flat, envyconfig avoids nesting when the first segment is one of:
+Some leading key segments are commonly used as qualifiers rather than grouping prefixes. To keep these flat, objectenvy avoids nesting when the first segment is one of:
 
 `max`, `min`, `is`, `enable`, `disable`
 
@@ -166,7 +154,7 @@ This applies to smart nesting (when no schema is provided). Schema-guided nestin
 // ENABLE_FEATURE_X=true
 // DISABLE_CACHE=false
 
-const result = config();
+const result = objectify({ env: process.env });
 
 // Result (flat keys):
 // {
@@ -178,19 +166,19 @@ const result = config();
 // }
 
 // You can customize the list:
-const custom = config({ nonNestingPrefixes: ['flag', 'has'] });
+const custom = objectify({ env: process.env, nonNestingPrefixes: ['flag', 'has'] });
 ```
 
 ### Disable Type Coercion
 
 ```typescript
-const result = config({ coerce: false });
+const result = objectify({ env: process.env, coerce: false });
 // All values remain strings
 ```
 
 ## API Reference
 
-### `config(options?)`
+### `objectify(options)`
 
 Parse environment variables into a nested config object.
 
@@ -205,41 +193,51 @@ Parse environment variables into a nested config object.
 | `delimiter` | `string` | `'_'` | Delimiter for nesting (e.g., `'__'` for double underscore) |
 | `nonNestingPrefixes` | `string[]` | `['max','min','is','enable','disable']` | First segments that should never trigger nesting in smart mode. Does not apply when `schema` is provided. |
 
-### `createConfig(defaultOptions)`
+### `override(defaults, config)`
 
-Create a reusable config loader with preset options.
+Merge config objects, with the second argument overriding the first.
 
 ```typescript
-const loadConfig = createConfig({ prefix: 'APP', schema: mySchema });
-const result = loadConfig(); // Uses defaults
-const testResult = loadConfig({ env: testEnv }); // Override env
+const defaults = { port: 3000, debug: false };
+const config = { debug: true };
+const result = override(defaults, config);
+// { port: 3000, debug: true }
 ```
 
 ## Type Utilities
 
-envyconfig exports type utilities to help with type-safe environment variable handling:
+objectenvy exports type utilities to help with type-safe environment variable handling:
 
 ### `ToEnv<T>`
 
-Convert a nested config type to a flat SCREAMING_SNAKE_CASE env record:
+Convert a nested config type to a flat SCREAMING_SNAKE_CASE env record. **Preserves string literal and template literal types** for compile-time validation:
 
 ```typescript
-import type { ToEnv } from 'envyconfig';
+import type { ToEnv } from 'objectenvy';
 
 type Config = {
   portNumber: number;
   log: {
-    level: string;
+    level: 'debug' | 'info' | 'warn' | 'error'; // Union types preserved!
     path: string;
   };
+  apiUrl: `https://${string}`; // Template literals preserved!
 };
 
 type Env = ToEnv<Config>;
 // {
-//   PORT_NUMBER: string;
-//   LOG_LEVEL: string;
+//   PORT_NUMBER: `${number}`;
+//   LOG_LEVEL: 'debug' | 'info' | 'warn' | 'error'; // ✓ Type-safe!
 //   LOG_PATH: string;
+//   API_URL: `https://${string}`; // ✓ Enforces https:// pattern!
 // }
+```
+
+This feature enables:
+- **Compile-time validation** of environment values
+- **IDE autocomplete** for valid configuration options
+- **Pattern enforcement** via template literal types
+- **Self-documenting** configuration with explicit allowed values
 ```
 
 ### `FromEnv<T>`
@@ -247,7 +245,7 @@ type Env = ToEnv<Config>;
 Convert flat env keys to camelCase (uses type-fest's `CamelCasedPropertiesDeep`):
 
 ```typescript
-import type { FromEnv } from 'envyconfig';
+import type { FromEnv } from 'objectenvy';
 
 type Env = { PORT_NUMBER: string; LOG_LEVEL: string };
 type Config = FromEnv<Env>;
@@ -259,7 +257,7 @@ type Config = FromEnv<Env>;
 Add or remove prefixes from env keys:
 
 ```typescript
-import type { WithPrefix, WithoutPrefix } from 'envyconfig';
+import type { WithPrefix, WithoutPrefix } from 'objectenvy';
 
 type Env = { PORT: string; DEBUG: string };
 type PrefixedEnv = WithPrefix<Env, 'APP'>;
@@ -274,7 +272,7 @@ type Unprefixed = WithoutPrefix<PrefixedEnv, 'APP'>;
 Extract env type from a Zod schema's inferred type:
 
 ```typescript
-import type { SchemaToEnv } from 'envyconfig';
+import type { SchemaToEnv } from 'objectenvy';
 import { z } from 'zod';
 
 const schema = z.object({

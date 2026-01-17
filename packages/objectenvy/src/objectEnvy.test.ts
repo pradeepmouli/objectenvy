@@ -1,8 +1,8 @@
 import { describe, it, expect, expectTypeOf } from 'vitest';
 import { z } from 'zod';
-import { objectify, objectEnvy, envy, apply, merge } from './objectEnvy.js';
+import { objectify, objectEnvy, envy, override, merge } from './objectEnvy.js';
 import type { ToEnv, FromEnv } from './typeUtils.js';
-import type { EnvSource } from './types.js';
+import type { EnvLike } from './types.js';
 
 describe('objectify', () => {
   describe('FromEnv type mapping', () => {
@@ -42,7 +42,7 @@ describe('objectify', () => {
     it('keeps single SNAKE_CASE entry flat as camelCase', () => {
       const env = {
         PORT_NUMBER: '1234'
-      } satisfies EnvSource;
+      } satisfies EnvLike;
       const config = objectify({ env });
       // Only one PORT_* entry, so it stays flat
       expect(config).toEqual({
@@ -54,7 +54,7 @@ describe('objectify', () => {
       const env = {
         LOG_LEVEL: 'debug',
         LOG_PATH: '/var/log'
-      } satisfies EnvSource;
+      } satisfies EnvLike;
       const config = objectify({ env }) as FromEnv<typeof env>;
       // Multiple LOG_* entries, so they get nested
       expect(config).toEqual({
@@ -680,25 +680,105 @@ describe('objectEnvy (config loader factory)', () => {
   });
 });
 
-describe('applyDefaults', () => {
+describe('filtering with include/exclude', () => {
+  it('includes only matching fields with include option', () => {
+    const env = {
+      DATABASE_HOST: 'localhost',
+      DATABASE_PORT: '5432',
+      API_KEY: 'secret',
+      PORT: '3000'
+    };
+    const config = objectify({ env, include: ['database'] });
+    expect(config).toEqual({
+      database: {
+        host: 'localhost',
+        port: 5432
+      }
+    });
+  });
+
+  it('excludes matching fields with exclude option', () => {
+    const env = {
+      DATABASE_HOST: 'localhost',
+      DATABASE_PORT: '5432',
+      API_KEY: 'secret',
+      API_SECRET: 'topsecret'
+    };
+    const config = objectify({ env, exclude: ['secret'] });
+    expect(config).toEqual({
+      database: {
+        host: 'localhost',
+        port: 5432
+      },
+      apiKey: 'secret'
+    });
+  });
+
+  it('applies both include and exclude filters', () => {
+    const env = {
+      DATABASE_HOST: 'localhost',
+      DATABASE_PASSWORD: 'secret',
+      API_KEY: 'key',
+      PORT: '3000'
+    };
+    const config = objectify({ env, include: ['database'], exclude: ['password'] });
+    // Only one DATABASE_HOST remains after filtering, so it stays flat
+    expect(config).toEqual({
+      databaseHost: 'localhost'
+    });
+  });
+
+  it('works with prefix and filtering', () => {
+    const env = {
+      APP_DATABASE_HOST: 'localhost',
+      APP_DATABASE_PORT: '5432',
+      APP_API_KEY: 'secret',
+      OTHER_VAR: 'ignored'
+    };
+    const config = objectify({ env, prefix: 'APP', include: ['database'] });
+    expect(config).toEqual({
+      database: {
+        host: 'localhost',
+        port: 5432
+      }
+    });
+  });
+
+  it('filtering is case-insensitive', () => {
+    const env = {
+      DATABASE_HOST: 'localhost',
+      database_port: '5432',
+      API_KEY: 'secret'
+    };
+    const config = objectify({ env, include: ['DATABASE'] });
+    expect(config).toEqual({
+      database: {
+        host: 'localhost',
+        port: 5432
+      }
+    });
+  });
+});
+
+describe('override', () => {
   it('applies default values to empty config', () => {
     const config = {};
     const defaults = { port: 3000, debug: false };
-    const result = apply(config, defaults);
+    const result = override(defaults, config);
     expect(result).toEqual({ port: 3000, debug: false });
   });
 
   it('preserves existing values over defaults', () => {
     const config = { port: 8080 };
     const defaults = { port: 3000, debug: false };
-    const result = apply(config, defaults);
+    const result = override(defaults, config);
     expect(result).toEqual({ port: 8080, debug: false });
   });
 
   it('recursively applies defaults to nested objects', () => {
     const config: any = { log: { level: 'debug' } };
     const defaults = { port: 3000, log: { level: 'info', path: '/var/log' } };
-    const result = apply(config, defaults);
+    const result = override(defaults, config);
     expect(result).toEqual({
       port: 3000,
       log: { level: 'debug', path: '/var/log' }
@@ -710,7 +790,7 @@ describe('applyDefaults', () => {
     const defaults = {
       database: { connection: { host: 'db.example.com', port: 5432 }, timeout: 30 }
     };
-    const result = apply(config, defaults);
+    const result = override(defaults, config);
     expect(result).toEqual({
       database: {
         connection: { host: 'localhost', port: 5432 },
@@ -722,7 +802,7 @@ describe('applyDefaults', () => {
   it('does not override with undefined defaults', () => {
     const config = { port: 8080 };
     const defaults = { port: 3000, debug: false };
-    const result = apply(config, defaults);
+    const result = override(defaults, config);
     expect(result).toEqual({ port: 8080, debug: false });
   });
 
@@ -730,21 +810,21 @@ describe('applyDefaults', () => {
     it('replaces arrays by default', () => {
       const config = { tags: ['prod'] };
       const defaults = { port: 3000, tags: ['v1'] };
-      const result = apply(config, defaults);
+      const result = override(defaults, config);
       expect(result).toEqual({ port: 3000, tags: ['prod'] });
     });
 
     it('concatenates arrays with concat strategy', () => {
       const config = { tags: ['prod'] };
       const defaults = { port: 3000, tags: ['v1'] };
-      const result = apply(config, defaults, { arrayMergeStrategy: 'concat' });
+      const result = override(defaults, config, { arrayMergeStrategy: 'concat' });
       expect(result).toEqual({ port: 3000, tags: ['prod', 'v1'] });
     });
 
     it('concatenates and deduplicates with concat-unique strategy', () => {
       const config = { hosts: ['localhost', 'example.com'] };
       const defaults = { port: 3000, hosts: ['example.com', 'api.example.com'] };
-      const result = apply(config, defaults, { arrayMergeStrategy: 'concat-unique' });
+      const result = override(defaults, config, { arrayMergeStrategy: 'concat-unique' });
       expect(result).toEqual({
         port: 3000,
         hosts: ['localhost', 'example.com', 'api.example.com']
@@ -754,7 +834,7 @@ describe('applyDefaults', () => {
     it('applies defaults to missing arrays', () => {
       const config = { port: 8080 };
       const defaults = { port: 3000, tags: ['v1', 'prod'] };
-      const result = apply(config, defaults, { arrayMergeStrategy: 'concat' });
+      const result = override(defaults, config, { arrayMergeStrategy: 'concat' });
       expect(result).toEqual({ port: 8080, tags: ['v1', 'prod'] });
     });
 
@@ -764,7 +844,7 @@ describe('applyDefaults', () => {
         server: { tags: ['v1'], port: 3000 },
         db: { hosts: ['db2'], pool: 10 }
       };
-      const result = apply(config, defaults, { arrayMergeStrategy: 'concat' });
+      const result = override(defaults, config, { arrayMergeStrategy: 'concat' });
       expect(result).toEqual({
         server: { tags: ['prod', 'v1'], port: 3000 },
         db: { hosts: ['db1', 'db2'], pool: 10 }

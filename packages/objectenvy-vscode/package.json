@@ -2,7 +2,7 @@
   "name": "objectenvy-vscode",
   "displayName": "ObjectEnvy Tools",
   "description": "Convert between schemas, .env files, and TypeScript types with real-time preview",
-  "version": "1.0.1",
+  "version": "1.2.0",
   "publisher": "objectenvy",
   "license": "MIT",
   "repository": {
@@ -17,31 +17,21 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:objectenvy.generateEnv",
-    "onCommand:objectenvy.generateTypes",
-    "onCommand:objectenvy.quickConvert",
     "onLanguage:typescript",
     "onLanguage:json",
     "workspaceContains:**/.env"
   ],
   "main": "./dist/extension.js",
-  "files": [
-    "dist/**/*.js",
-    "dist/**/*.d.ts",
-    "README.md",
-    "CHANGELOG.md",
-    "LICENSE"
-  ],
   "contributes": {
     "commands": [
       {
         "command": "objectenvy.generateEnv",
-        "title": "Generate .env from Schema",
+        "title": "Generate .env from Object (envy)",
         "category": "ObjectEnvy"
       },
       {
         "command": "objectenvy.generateTypes",
-        "title": "Generate Types from .env",
+        "title": "Generate Types from .env (objectify)",
         "category": "ObjectEnvy"
       },
       {
@@ -97,17 +87,21 @@
     "check:native": "tsgo --noEmit -p tsconfig.json",
     "test": "vitest",
     "package": "vsce package --no-dependencies",
-    "publish": "vsce publish --no-dependencies",
+    "publish": "vsce publish",
     "lint": "oxlint src",
     "format": "oxfmt src",
     "format:check": "oxfmt --check src"
   },
   "devDependencies": {
-    "@types/node": "^20.11.0",
+    "@types/node": "^25.0.8",
     "@types/vscode": "^1.85.0",
-    "@vscode/vsce": "^3.2.0",
+    "@vscode/vsce": "^3.7.1",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.16"
+    "vitest": "^4.0.17"
+  },
+  "dependencies": {
+    "objectenvy": "workspace:*",
+    "ts-morph": "^27.0.2"
   }
 }

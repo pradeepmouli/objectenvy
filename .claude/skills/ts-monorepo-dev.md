@@ -246,7 +246,7 @@ Create `.oxfmtrc.json` at root:
   "printWidth": 100,
   "semi": true,
   "singleQuote": true,
-  "trailingComma": "es5"
+  "trailingComma": "none"
 }
 ```
 
@@ -353,6 +353,105 @@ pnpm -r list
 
 # Show dependency tree
 pnpm -r list --depth=1
+```
+
+## TypeScript Coding Standards
+
+### Naming Conventions
+
+| Element | Convention | Example |
+|---------|------------|---------|
+| Variables & Functions | camelCase | `handleClick()`, `isActive` |
+| Classes, Types, Interfaces, Enums | PascalCase | `MyClass`, `UserInterface` |
+| Private Class Members | ES2022 `#` syntax | `#privateField`, `#privateMethod()` |
+| Internal Class Members | `$` prefix | `$internalMethod()`, `$helper` |
+| Constants | UPPER_SNAKE_CASE | `MAX_RETRIES`, `API_BASE_URL` |
+| Files (application code) | PascalCase | `UserService.ts`, `ApiClient.ts` |
+| Files (scripts/tests/fixtures) | kebab-case | `test-utils.ts`, `api-client.spec.ts` |
+
+### Code Style Rules
+
+- **Explicit return types**: Always specify return types for functions
+- **No `any` type**: Use `unknown` or proper types instead
+- **Async/await**: Prefer over raw Promises
+- **Strict equality**: Use `===` and `!==` only
+- **Arrow functions**: Use for callbacks and functional components
+- **Template literals**: Use for string concatenation
+- **Destructuring**: Use for objects and arrays
+- **Spread/rest operators**: Use for copying and merging
+
+### Class Members Example
+
+```typescript
+class UserService {
+  // Constants
+  static readonly MAX_RETRIES = 3;
+
+  // Private fields (ES2022 syntax)
+  #apiClient: ApiClient;
+  #cache: Map<string, User>;
+
+  // Internal members (exposed to subclasses/same module)
+  $logger: Logger;
+
+  constructor(apiClient: ApiClient, logger: Logger) {
+    this.#apiClient = apiClient;
+    this.#cache = new Map();
+    this.$logger = logger;
+  }
+
+  // Public method with explicit return type
+  async getUser(id: string): Promise<User> {
+    return this.#fetchWithCache(id);
+  }
+
+  // Private method
+  async #fetchWithCache(id: string): Promise<User> {
+    if (this.#cache.has(id)) {
+      return this.#cache.get(id)!;
+    }
+    const user = await this.#apiClient.fetch(`/users/${id}`);
+    this.#cache.set(id, user);
+    return user;
+  }
+}
+```
+
+### Preferred Technologies
+
+| Use Case | Technology |
+|----------|------------|
+| Package Management | pnpm |
+| Monorepo | pnpm workspaces |
+| Version Management | pnpm changesets |
+| Testing | vitest |
+| Linting | oxlint |
+| Formatting | oxfmt |
+| Schema Validation | Zod |
+| Logging | pino |
+| Environment Variables | dotenvx |
+| Script Automation | tsx |
+| Advanced Types | type-fest |
+| Documentation | TypeDoc |
+| Utilities | sindresorhus packages |
+| Date/Time | date-fns or Day.js |
+| HTTP Client | Axios |
+| WebSocket | ws |
+
+### JSDoc Documentation
+
+Only document **public APIs**. If unclear whether something is public, ask.
+
+```typescript
+/**
+ * Fetches a user by their unique identifier.
+ * @param id - The user's unique identifier
+ * @returns The user object if found
+ * @throws {UserNotFoundError} If the user doesn't exist
+ */
+async getUser(id: string): Promise<User> {
+  // Implementation
+}
 ```
 
 ## TypeScript Best Practices

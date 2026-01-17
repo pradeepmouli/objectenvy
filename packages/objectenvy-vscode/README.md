@@ -12,24 +12,24 @@ Convert between schemas, .env files, and TypeScript types with real-time preview
 
 ## Usage
 
-### Generate .env from Schema
+### Generate .env from Object (envy)
 
 1. Right-click on a TypeScript or JSON file in the Explorer
-2. Select "ObjectEnvy: Generate .env from Schema"
+2. Select "ObjectEnvy: Generate .env from Object (envy)"
 3. Choose output location and options
 4. Preview and save
 
-### Generate Types from .env
+### Generate Types from .env (objectify)
 
 1. Right-click on a .env file in the Explorer
-2. Select "ObjectEnvy: Generate Types from .env"
+2. Select "ObjectEnvy: Generate Types from .env (objectify)"
 3. Choose output format (TypeScript, Zod, JSON Schema)
 4. Preview and save
 
 ### Commands
 
-- `ObjectEnvy: Generate .env from Schema` - Convert schema to .env template
-- `ObjectEnvy: Generate Types from .env` - Generate TypeScript types from .env
+- `ObjectEnvy: Generate .env from Object (envy)` - Convert objects/types to .env template
+- `ObjectEnvy: Generate Types from .env (objectify)` - Generate TypeScript types from .env
 - `ObjectEnvy: Quick Convert` - Quick conversion with smart defaults
 
 ## Configuration

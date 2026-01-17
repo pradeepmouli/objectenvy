@@ -61,6 +61,38 @@ describe('Type Utilities', () => {
         DATABASE_CONNECTION_PORT: `${number}`;
       }>();
     });
+
+    it('preserves string literals', () => {
+      type Config = {
+        environment: 'development' | 'production';
+        logLevel: 'debug' ;
+        host: string;
+      };
+
+      type Env = ToEnv<Config>;
+
+      expectTypeOf<Env>().toEqualTypeOf<{
+        ENVIRONMENT: 'development' | 'production',
+        LOG_LEVEL: 'debug',
+        HOST: string;
+      }>();
+    });
+
+    it('preserves template literal types', () => {
+      type Config = {
+        apiUrl: `https://${string}`;
+        version: `v${number}`;
+        tag: string;
+      };
+
+      type Env = ToEnv<Config>;
+
+      expectTypeOf<Env>().toEqualTypeOf<{
+        API_URL: `https://${string}`;
+        VERSION: `v${number}`;
+        TAG: string;
+      }>();
+    });
   });
 
   describe('FromEnv', () => {
