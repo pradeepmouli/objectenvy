@@ -3,10 +3,10 @@
   "compilerOptions": {
     "rootDir": "./src",
     "outDir": "./dist",
-    "rootDir": "./src",
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
+    "composite": true,
     "types": ["node"]
   },
   "include": ["src/**/*"],
