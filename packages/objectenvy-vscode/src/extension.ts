@@ -6,6 +6,8 @@
 import * as vscode from 'vscode';
 import { objectify, envy } from 'objectenvy';
 import type { ConfigValue, ConfigObject } from 'objectenvy';
+import {
+  Project,
   SyntaxKind,
   InterfaceDeclaration,
   TypeAliasDeclaration,
