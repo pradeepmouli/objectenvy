@@ -45,7 +45,7 @@
   },
   "devDependencies": {
     "@dotenvx/dotenvx": "^1.51.4",
-    "@types/node": "^20.19.27",
+    "@types/node": "^25.0.9",
     "commander": "^14.0.2",
     "tsx": "^4.21.0",
     "type-fest": "^5.3.1",
