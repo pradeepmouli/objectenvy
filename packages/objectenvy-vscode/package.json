@@ -93,8 +93,8 @@
     "format:check": "oxfmt --check src"
   },
   "devDependencies": {
-    "@types/node": "^25.0.8",
-    "@types/vscode": "^1.85.0",
+    "@types/node": "^25.2.2",
+    "@types/vscode": "^1.109.0",
     "@vscode/vsce": "^3.7.1",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
