@@ -40,29 +40,44 @@ jobs:
       - name: Build
         run: pnpm build
 
-      - name: Create Release Pull Request or Publish
-        id: changesets
-        uses: changesets/action@v1
-        with:
-          version: pnpm version
-          publish: pnpm release
-          commit: 'chore: version packages'
-          title: 'chore: version packages'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Configure npm for publishing
+        run: |
+          npm config delete //registry.npmjs.org/:_authToken 2>/dev/null || true
+          echo "NPM configuration:"
+          npm config list
 
-      - name: Create GitHub Release
-        if: steps.changesets.outputs.published == 'true'
-        uses: actions/create-release@v1
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Version packages and publish
+        run: |
+          CHANGESET_COUNT=$(find .changeset -maxdepth 1 -name '*.md' ! -name 'README.md' | wc -l)
+          
+          if [ "$CHANGESET_COUNT" -gt 0 ]; then
+            echo "Found $CHANGESET_COUNT changesets, proceeding with publishing..."
+            
+            pnpm version
+            
+            git add -A
+            git commit -m "chore: version packages" || echo "No version changes to commit"
+            git push origin master
+            
+            pnpm changeset status --output .changeset/status.json
+            RELEASES=$(node -e "const s=require('./.changeset/status.json'); console.log((s.releases||[]).map(r=>r.name).join(' '));")
+            if [ -n "$RELEASES" ]; then
+              FILTER_ARGS=""
+              for name in $RELEASES; do
+                FILTER_ARGS="$FILTER_ARGS --filter $name"
+              done
+              pnpm -r $FILTER_ARGS exec npm publish --provenance --access public
+            else
+              echo "No packages to publish after versioning"
+            fi
+          else
+            echo "No changesets found, skipping publication"
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v${{ fromJson(steps.changesets.outputs.publishedPackages)[0].version }}
-          release_name: v${{ fromJson(steps.changesets.outputs.publishedPackages)[0].version }}
-          body: |
-            Release ${{ fromJson(steps.changesets.outputs.publishedPackages)[0].version }}
-            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/master/CHANGELOG.md) for details.
-          draft: false
-          prerelease: ${{ contains(fromJson(steps.changesets.outputs.publishedPackages)[0].version, '-') }}
+          NPM_CONFIG_PROVENANCE: true
