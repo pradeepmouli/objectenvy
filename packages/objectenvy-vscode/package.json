@@ -81,7 +81,7 @@
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsgo -p tsconfig.json",
     "build:native": "tsgo -p tsconfig.json",
     "dev": "tsx watch src/extension.ts",
     "check:native": "tsgo --noEmit -p tsconfig.json",
@@ -93,12 +93,12 @@
     "format:check": "oxfmt --check src"
   },
   "devDependencies": {
-    "@types/node": "^25.0.8",
-    "@types/vscode": "^1.85.0",
+    "@types/node": "^25.2.3",
+    "@types/vscode": "^1.109.0",
     "@vscode/vsce": "^3.7.1",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.17"
+    "vitest": "^4.0.18"
   },
   "dependencies": {
     "objectenvy": "workspace:*",

@@ -29,13 +29,13 @@ function isConfigValue(value: unknown): value is ConfigValue {
 
   // Arrays must contain only ConfigValue elements
   if (Array.isArray(value)) {
-    return value.every(element => isConfigValue(element));
+    return value.every((element) => isConfigValue(element));
   }
 
   // Plain objects (non-null, non-array) whose values are ConfigValue
   if (type === 'object' && value !== null) {
     const obj = value as Record<string, unknown>;
-    return Object.values(obj).every(v => isConfigValue(v));
+    return Object.values(obj).every((v) => isConfigValue(v));
   }
 
   // All other types (undefined, function, symbol, bigint, etc.) are invalid
@@ -53,7 +53,7 @@ function isConfigObject(value: unknown): value is ConfigObject {
   }
 
   const obj = value as Record<string, unknown>;
-  return Object.values(obj).every(v => isConfigValue(v));
+  return Object.values(obj).every((v) => isConfigValue(v));
 }
 
 /**
@@ -76,18 +76,15 @@ export function activate(context: vscode.ExtensionContext): void {
   outputChannel.appendLine('Using ObjectEnvy library for conversions');
 
   // Register commands
-  const generateEnvCommand = vscode.commands.registerCommand(
-    'objectenvy.generateEnv',
-    async () => {
-      try {
-        await handleGenerateEnv(outputChannel);
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        vscode.window.showErrorMessage(`Generate .env failed: ${message}`);
-        outputChannel.appendLine(`Error: ${message}`);
-      }
+  const generateEnvCommand = vscode.commands.registerCommand('objectenvy.generateEnv', async () => {
+    try {
+      await handleGenerateEnv(outputChannel);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      vscode.window.showErrorMessage(`Generate .env failed: ${message}`);
+      outputChannel.appendLine(`Error: ${message}`);
     }
-  );
+  });
 
   const generateTypesCommand = vscode.commands.registerCommand(
     'objectenvy.generateTypes',
@@ -180,7 +177,9 @@ async function handleGenerateEnv(outputChannel: vscode.OutputChannel): Promise<v
     const envDoc = await vscode.workspace.openTextDocument(envUri);
     await vscode.window.showTextDocument(envDoc, { viewColumn: vscode.ViewColumn.Beside });
 
-    outputChannel.appendLine(`Generated .env.template with ${Object.keys(envVars).length} variables`);
+    outputChannel.appendLine(
+      `Generated .env.template with ${Object.keys(envVars).length} variables`
+    );
     vscode.window.showInformationMessage('Generated .env.template successfully!');
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -250,7 +249,10 @@ async function handleGenerateTypes(outputChannel: vscode.OutputChannel): Promise
       const equalsIndex = trimmed.indexOf('=');
       if (equalsIndex === -1) continue;
       const key = trimmed.substring(0, equalsIndex).trim();
-      const value = trimmed.substring(equalsIndex + 1).trim().replace(/^["']|["']$/g, '');
+      const value = trimmed
+        .substring(equalsIndex + 1)
+        .trim()
+        .replace(/^["']|["']$/g, '');
       env[key] = value;
     }
 
@@ -381,7 +383,10 @@ async function handleConvertRequest(
         const equalsIndex = trimmed.indexOf('=');
         if (equalsIndex === -1) continue;
         const key = trimmed.substring(0, equalsIndex).trim();
-        const value = trimmed.substring(equalsIndex + 1).trim().replace(/^["']|["']$/g, '');
+        const value = trimmed
+          .substring(equalsIndex + 1)
+          .trim()
+          .replace(/^["']|["']$/g, '');
         env[key] = value;
       }
       intermediateObj = objectify({ env, coerce: true });
@@ -442,9 +447,7 @@ function parseTypeScriptToObject(input: string): ConfigObject {
 /**
  * Extract fields from interface declaration
  */
-function extractFieldsFromInterface(
-  iface: InterfaceDeclaration
-): Record<string, any> {
+function extractFieldsFromInterface(iface: InterfaceDeclaration): Record<string, any> {
   const obj: Record<string, any> = {};
 
   for (const prop of iface.getProperties()) {
