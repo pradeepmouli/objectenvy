@@ -15,7 +15,9 @@ export async function cli(argv: string[] = process.argv): Promise<void> {
 
   program
     .name('objectenvy-cli')
-    .description('Unified ObjectEnvy CLI - Generate .env files from schemas and TypeScript types from .env files')
+    .description(
+      'Unified ObjectEnvy CLI - Generate .env files from schemas and TypeScript types from .env files'
+    )
     .version(packageJson.version, '-v, --version', 'Display version')
     .helpOption('-h, --help', 'Display help')
     .addHelpCommand('help [command]', 'Display help for a command');

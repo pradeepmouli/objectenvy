@@ -3,7 +3,7 @@ import type {
   PascalCase,
   ScreamingSnakeCase,
   Simplify,
-  UnionToIntersection,
+  UnionToIntersection
 } from 'type-fest';
 
 type Primitive = string | number | boolean;
@@ -40,13 +40,12 @@ type BuildNested<Path extends readonly string[], V> = Path extends []
 
 type FirstSegment<S extends string> = S extends `${infer Head}_${string}` ? Head : never;
 
-type HasSibling<K extends string, Keys extends string> = FirstSegment<K> extends infer S extends string
-  ? Extract<Exclude<Keys, K>, `${S}_${string}`> extends never
-    ? false
-    : true
-  : false;
-
-
+type HasSibling<K extends string, Keys extends string> =
+  FirstSegment<K> extends infer S extends string
+    ? Extract<Exclude<Keys, K>, `${S}_${string}`> extends never
+      ? false
+      : true
+    : false;
 
 /**
  * Flatten nested object paths with SCREAMING_SNAKE_CASE keys
@@ -58,12 +57,12 @@ type FlattenToEnv<T, Prefix extends string = '', D extends Depth = 5> =
       ? Record<string, string>
       : Record<Prefix, string>
     : // Arrays serialize to comma-separated strings at runtime (check before object)
-    [T] extends [Array<unknown>]
+      [T] extends [Array<unknown>]
       ? Prefix extends ''
         ? never
         : Record<Prefix, string>
       : // Objects recurse through keys (check before primitives, use tuple to prevent distribution)
-      [T] extends [object]
+        [T] extends [object]
         ? {
             [K in keyof T & string]: FlattenToEnv<
               T[K],
@@ -72,7 +71,7 @@ type FlattenToEnv<T, Prefix extends string = '', D extends Depth = 5> =
             >;
           }[keyof T & string]
         : // Primitives (using tuple to prevent distribution over unions)
-        [T] extends [Primitive]
+          [T] extends [Primitive]
           ? Prefix extends ''
             ? never
             : Record<Prefix, UncoercedType<T>>
@@ -168,7 +167,11 @@ export type WithoutPrefix<T, Prefix extends string> = {
 export type SchemaToEnv<T> = T extends { _output: infer O } ? ToEnv<O> : ToEnv<T>;
 
 type InternalBooleanString = 'true' | 'false' | 'n' | 'y' | 'no' | 'yes' | 'on' | 'off';
-export type BooleanString = Simplify<InternalBooleanString | Uppercase<InternalBooleanString> | PascalCase<Lowercase<InternalBooleanString>, { preserveConsecutiveUppercase: true }>>;
+export type BooleanString = Simplify<
+  | InternalBooleanString
+  | Uppercase<InternalBooleanString>
+  | PascalCase<Lowercase<InternalBooleanString>, { preserveConsecutiveUppercase: true }>
+>;
 
 export type NumberString = `${number}`;
 
@@ -188,4 +191,4 @@ export type UncoercedType<T> = T extends boolean
     ? NumberString
     : T extends string
       ? T
-      : string
+      : string;

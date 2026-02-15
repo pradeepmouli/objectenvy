@@ -1,5 +1,11 @@
 import type { z, ZodObject } from 'zod';
-import type { EnvLike, ObjectEnvyOptions, EnviableObject, EnviableValue, MergeOptions } from './types.js';
+import type {
+  EnvLike,
+  ObjectEnvyOptions,
+  EnviableObject,
+  EnviableValue,
+  MergeOptions
+} from './types.js';
 import { coerceValue, setNestedValue } from './utils.js';
 import type { ToEnv, FromEnv } from './typeUtils.js';
 import type { Merge } from 'type-fest';
@@ -9,7 +15,6 @@ interface ParsedEntry {
   segments: string[];
   value: string;
 }
-
 
 interface SchemaPath {
   path: string[];
@@ -427,7 +432,7 @@ export function objectify<E extends EnvLike>(
   options: Omit<ObjectEnvyOptions, 'schema'> & { env: E }
 ): FromEnv<E>;
 export function objectify<T extends ZodObject>(
-  options: ObjectEnvyOptions<z.infer<T>> & { schema: T}
+  options: ObjectEnvyOptions<z.infer<T>> & { schema: T }
 ): z.infer<T>;
 export function objectify<T extends EnviableObject = EnviableObject>(
   options: ObjectEnvyOptions<T> = {}
@@ -466,9 +471,7 @@ export function objectify<T extends EnviableObject = EnviableObject>(
  * const testConfig = loadConfig({ env: testEnv }); // Override env for testing
  * const env = toEnv(config); // Convert config back to env format
  */
-export function objectEnvy(
-  defaultOptions: Omit<ObjectEnvyOptions, 'schema'>
-): {
+export function objectEnvy(defaultOptions: Omit<ObjectEnvyOptions, 'schema'>): {
   objectify: (overrides?: Partial<Omit<ObjectEnvyOptions, 'schema'>>) => EnviableObject;
   envy: typeof envy;
 };
@@ -511,11 +514,23 @@ export function objectEnvy<T extends EnviableObject = EnviableObject>(
     }
 
     // Compute result using objectify
-    const result: EnviableObject = ('schema' in mergedOptions && mergedOptions.schema
-      ? objectify<z.ZodObject<any>>({ ...mergedOptions, schema: mergedOptions.schema } as ObjectEnvyOptions<EnviableObject> & { schema: z.ZodObject<any> } as any)
-      : mergedOptions.env
-        ? objectify({ ...mergedOptions, env: mergedOptions.env } as ObjectEnvyOptions<EnviableObject> & { env: EnvLike })
-        : objectify({ prefix: mergedOptions.prefix, coerce: mergedOptions.coerce, delimiter: mergedOptions.delimiter })) as EnviableObject;
+    const result: EnviableObject = (
+      'schema' in mergedOptions && mergedOptions.schema
+        ? objectify<z.ZodObject<any>>({
+            ...mergedOptions,
+            schema: mergedOptions.schema
+          } as ObjectEnvyOptions<EnviableObject> & { schema: z.ZodObject<any> } as any)
+        : mergedOptions.env
+          ? objectify({
+              ...mergedOptions,
+              env: mergedOptions.env
+            } as ObjectEnvyOptions<EnviableObject> & { env: EnvLike })
+          : objectify({
+              prefix: mergedOptions.prefix,
+              coerce: mergedOptions.coerce,
+              delimiter: mergedOptions.delimiter
+            })
+    ) as EnviableObject;
 
     // Cache the result
     envCache.set(optionsKey, result);
@@ -651,7 +666,7 @@ export function merge<T extends EnviableObject, U extends EnviableObject>(
   obj1: T,
   obj2: U,
   options: MergeOptions = {}
-): Merge<T,U> {
+): Merge<T, U> {
   const { arrayMergeStrategy = 'replace' } = options;
 
   function mergeArrays(arr1: unknown[], arr2: unknown[]): unknown[] {

@@ -65,15 +65,15 @@ describe('Type Utilities', () => {
     it('preserves string literals', () => {
       type Config = {
         environment: 'development' | 'production';
-        logLevel: 'debug' ;
+        logLevel: 'debug';
         host: string;
       };
 
       type Env = ToEnv<Config>;
 
       expectTypeOf<Env>().toEqualTypeOf<{
-        ENVIRONMENT: 'development' | 'production',
-        LOG_LEVEL: 'debug',
+        ENVIRONMENT: 'development' | 'production';
+        LOG_LEVEL: 'debug';
         HOST: string;
       }>();
     });

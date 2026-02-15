@@ -34,25 +34,25 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsgo -p tsconfig.json",
     "dev": "tsx src/cli.ts",
     "test": "vitest",
     "test:coverage": "vitest --coverage",
     "lint": "oxlint src",
     "format": "oxfmt src",
     "format:check": "oxfmt --check src",
-    "type-check": "tsc --noEmit -p tsconfig.json"
+    "type-check": "tsgo --noEmit -p tsconfig.json"
   },
   "dependencies": {
-    "commander": "^14.0.2",
+    "commander": "^14.0.3",
     "objectenvy": "workspace:*",
-    "ts-morph": "^25.0.0"
+    "ts-morph": "^27.0.2"
   },
   "devDependencies": {
-    "@types/node": "^20.19.27",
+    "@types/node": "^25.2.3",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.17"
+    "vitest": "^4.0.18"
   },
   "engines": {
     "node": ">=18"

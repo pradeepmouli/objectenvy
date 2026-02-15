@@ -604,7 +604,7 @@ describe('WebView provider', () => {
   ],
   "main": "./dist/extension.js",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsgo -p tsconfig.json",
     "package": "vsce package",
     "publish": "vsce publish"
   },

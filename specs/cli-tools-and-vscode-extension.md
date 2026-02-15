@@ -521,7 +521,7 @@ Root package.json:
 - **Generators**: Template literals, custom serializers
 - **VS Code Extension**: VS Code Extension API, React (optional for WebView)
 - **Testing**: vitest for both packages
-- **Build**: tsgo/tsc for compilation
+- **Build**: tsgo/tsgo for compilation
 
 ---
 
