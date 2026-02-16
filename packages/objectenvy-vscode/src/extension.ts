@@ -4,7 +4,6 @@
  */
 
 import * as vscode from 'vscode';
-import { objectify, envy } from 'objectenvy';
 import type { ConfigValue, ConfigObject } from 'objectenvy';
 import {
   Project,
@@ -13,6 +12,16 @@ import {
   TypeAliasDeclaration,
   TypeNode
 } from 'ts-morph';
+
+let objectenvyModulePromise: Promise<typeof import('objectenvy')> | null = null;
+
+async function getObjectenvyModule(): Promise<typeof import('objectenvy')> {
+  if (!objectenvyModulePromise) {
+    objectenvyModulePromise = import('objectenvy');
+  }
+
+  return objectenvyModulePromise;
+}
 
 /**
  * Type guard to check if a value is a ConfigValue.
@@ -71,14 +80,37 @@ function assertConfigObject(value: unknown): asserts value is ConfigObject {
 export function activate(context: vscode.ExtensionContext): void {
   const outputChannel = vscode.window.createOutputChannel('ObjectEnvy Tools');
 
+  const extensionVersion =
+    typeof context.extension?.packageJSON?.version === 'string'
+      ? (context.extension.packageJSON.version as string)
+      : 'unknown';
+
   outputChannel.appendLine('ObjectEnvy Tools extension activated');
-  outputChannel.appendLine(`Version: 1.1.0`);
+  outputChannel.appendLine(`Version: ${extensionVersion}`);
   outputChannel.appendLine('Using ObjectEnvy library for conversions');
+
+  const statusBarItem = vscode.window.createStatusBarItem(
+    vscode.StatusBarAlignment.Right,
+    100
+  );
+  statusBarItem.text = 'ObjectEnvy';
+  statusBarItem.tooltip = 'ObjectEnvy: Quick Convert';
+  statusBarItem.command = 'objectenvy.quickConvert';
+  statusBarItem.show();
 
   // Register commands
   const generateEnvCommand = vscode.commands.registerCommand('objectenvy.generateEnv', async () => {
     try {
-      await handleGenerateEnv(outputChannel);
+      await vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: 'ObjectEnvy: Generating .env...',
+          cancellable: false
+        },
+        async () => {
+          await handleGenerateEnv(outputChannel);
+        }
+      );
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       vscode.window.showErrorMessage(`Generate .env failed: ${message}`);
@@ -90,7 +122,16 @@ export function activate(context: vscode.ExtensionContext): void {
     'objectenvy.generateTypes',
     async () => {
       try {
-        await handleGenerateTypes(outputChannel);
+        await vscode.window.withProgress(
+          {
+            location: vscode.ProgressLocation.Notification,
+            title: 'ObjectEnvy: Generating types...',
+            cancellable: false
+          },
+          async () => {
+            await handleGenerateTypes(outputChannel);
+          }
+        );
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         vscode.window.showErrorMessage(`Generate Types failed: ${message}`);
@@ -116,6 +157,7 @@ export function activate(context: vscode.ExtensionContext): void {
     generateEnvCommand,
     generateTypesCommand,
     quickConvertCommand,
+    statusBarItem,
     outputChannel
   );
 }
@@ -156,6 +198,8 @@ async function handleGenerateEnv(outputChannel: vscode.OutputChannel): Promise<v
 
     // Validate the parsed object
     assertConfigObject(intermediateObj);
+
+    const { envy } = await getObjectenvyModule();
 
     // Convert to .env format
     const envVars = envy(intermediateObj);
@@ -255,6 +299,8 @@ async function handleGenerateTypes(outputChannel: vscode.OutputChannel): Promise
         .replace(/^["']|["']$/g, '');
       env[key] = value;
     }
+
+    const { objectify } = await getObjectenvyModule();
 
     // Convert to nested object
     const configObj = objectify({ env, coerce: true });
@@ -361,67 +407,78 @@ async function handleConvertRequest(
   message: { input: string; from: string; to: string },
   outputChannel: vscode.OutputChannel
 ): Promise<void> {
-  try {
-    outputChannel.appendLine(`Converting from ${message.from} to ${message.to}`);
+  await vscode.window.withProgress(
+    {
+      location: vscode.ProgressLocation.Notification,
+      title: `ObjectEnvy: Converting ${message.from} → ${message.to}...`,
+      cancellable: false
+    },
+    async () => {
+      try {
+        outputChannel.appendLine(`Converting from ${message.from} to ${message.to}`);
 
-    let output = '';
+        const { objectify, envy } = await getObjectenvyModule();
 
-    // Parse input based on source format
-    let intermediateObj: unknown;
+        let output = '';
 
-    if (message.from === 'typescript') {
-      intermediateObj = parseTypeScriptToObject(message.input);
-    } else if (message.from === 'json') {
-      intermediateObj = JSON.parse(message.input);
-    } else if (message.from === 'env') {
-      // Parse env to object first
-      const env: Record<string, string> = {};
-      const lines = message.input.split('\n');
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed || trimmed.startsWith('#')) continue;
-        const equalsIndex = trimmed.indexOf('=');
-        if (equalsIndex === -1) continue;
-        const key = trimmed.substring(0, equalsIndex).trim();
-        const value = trimmed
-          .substring(equalsIndex + 1)
-          .trim()
-          .replace(/^["']|["']$/g, '');
-        env[key] = value;
+        // Parse input based on source format
+        let intermediateObj: unknown;
+
+        if (message.from === 'typescript') {
+          intermediateObj = parseTypeScriptToObject(message.input);
+        } else if (message.from === 'json') {
+          intermediateObj = JSON.parse(message.input);
+        } else if (message.from === 'env') {
+          // Parse env to object first
+          const env: Record<string, string> = {};
+          const lines = message.input.split('\n');
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed || trimmed.startsWith('#')) continue;
+            const equalsIndex = trimmed.indexOf('=');
+            if (equalsIndex === -1) continue;
+            const key = trimmed.substring(0, equalsIndex).trim();
+            const value = trimmed
+              .substring(equalsIndex + 1)
+              .trim()
+              .replace(/^["']|["']$/g, '');
+            env[key] = value;
+          }
+          intermediateObj = objectify({ env, coerce: true });
+        } else {
+          throw new Error(`Unsupported input format: ${message.from}`);
+        }
+
+        // Validate the parsed object
+        assertConfigObject(intermediateObj);
+
+        // Convert to output format
+        if (message.to === 'env') {
+          const envVars = envy(intermediateObj);
+          output = Object.entries(envVars)
+            .map(([key, value]) => `${key}=${value}`)
+            .join('\n');
+        } else if (message.to === 'json') {
+          output = JSON.stringify(intermediateObj, null, 2);
+        } else if (message.to === 'typescript') {
+          output = convertObjectToTypeScript(intermediateObj);
+        } else {
+          throw new Error(`Unsupported output format: ${message.to}`);
+        }
+
+        panel.webview.postMessage({
+          command: 'conversionResult',
+          output: output
+        });
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        panel.webview.postMessage({
+          command: 'conversionError',
+          error: errorMessage
+        });
       }
-      intermediateObj = objectify({ env, coerce: true });
-    } else {
-      throw new Error(`Unsupported input format: ${message.from}`);
     }
-
-    // Validate the parsed object
-    assertConfigObject(intermediateObj);
-
-    // Convert to output format
-    if (message.to === 'env') {
-      const envVars = envy(intermediateObj);
-      output = Object.entries(envVars)
-        .map(([key, value]) => `${key}=${value}`)
-        .join('\n');
-    } else if (message.to === 'json') {
-      output = JSON.stringify(intermediateObj, null, 2);
-    } else if (message.to === 'typescript') {
-      output = convertObjectToTypeScript(intermediateObj);
-    } else {
-      throw new Error(`Unsupported output format: ${message.to}`);
-    }
-
-    panel.webview.postMessage({
-      command: 'conversionResult',
-      output: output
-    });
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    panel.webview.postMessage({
-      command: 'conversionError',
-      error: errorMessage
-    });
-  }
+  );
 }
 
 /**

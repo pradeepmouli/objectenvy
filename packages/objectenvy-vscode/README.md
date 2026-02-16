@@ -32,6 +32,14 @@ Convert between schemas, .env files, and TypeScript types with real-time preview
 - `ObjectEnvy: Generate Types from .env (objectify)` - Generate TypeScript types from .env
 - `ObjectEnvy: Quick Convert` - Quick conversion with smart defaults
 
+### Keyboard Shortcut
+
+- `ObjectEnvy: Quick Convert`: `Ctrl+Alt+E` (macOS: `Cmd+Alt+E`)
+
+### Status Bar
+
+- Click the `ObjectEnvy` status bar item to open Quick Convert
+
 ## Configuration
 
 Configure ObjectEnvy in VS Code settings:
@@ -47,7 +55,7 @@ Configure ObjectEnvy in VS Code settings:
 
 ## Requirements
 
-- VS Code 1.85.0 or higher
+- VS Code 1.109.0 or higher
 - TypeScript files require TypeScript workspace
 
 ## License

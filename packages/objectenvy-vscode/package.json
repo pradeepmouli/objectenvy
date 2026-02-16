@@ -5,16 +5,28 @@
   "version": "1.2.0",
   "publisher": "objectenvy",
   "license": "MIT",
+  "icon": "icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/pradeepmouli/objectenvy"
   },
   "engines": {
-    "vscode": "^1.85.0"
+    "vscode": "^1.109.0"
   },
   "categories": [
     "Programming Languages",
     "Other"
+  ],
+  "keywords": [
+    "env",
+    "dotenv",
+    ".env",
+    "environment",
+    "typescript",
+    "schema",
+    "json",
+    "zod",
+    "types"
   ],
   "activationEvents": [
     "onLanguage:typescript",
@@ -54,6 +66,13 @@
         }
       ]
     },
+    "keybindings": [
+      {
+        "command": "objectenvy.quickConvert",
+        "key": "ctrl+alt+e",
+        "mac": "cmd+alt+e"
+      }
+    ],
     "configuration": {
       "title": "ObjectEnvy Tools",
       "properties": {
@@ -86,6 +105,7 @@
     "dev": "tsx watch src/extension.ts",
     "check:native": "tsgo --noEmit -p tsconfig.json",
     "test": "vitest",
+    "test:integration": "pnpm run build && node ./tests/integration/runTests.mjs",
     "package": "vsce package --no-dependencies",
     "publish": "vsce publish",
     "lint": "oxlint src",
@@ -93,9 +113,11 @@
     "format:check": "oxfmt --check src"
   },
   "devDependencies": {
+    "@vscode/test-electron": "^2.5.2",
     "@types/node": "^25.2.3",
     "@types/vscode": "^1.109.0",
     "@vscode/vsce": "^3.7.1",
+    "mocha": "^11.7.2",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18"

@@ -15,11 +15,28 @@ vi.mock('vscode', () => {
         _callback: callback
       }))
     },
+    StatusBarAlignment: {
+      Right: 2
+    },
+    ProgressLocation: {
+      Notification: 15
+    },
     window: {
       createOutputChannel: vi.fn(() => ({
         appendLine: vi.fn(),
         dispose: vi.fn()
       })),
+      createStatusBarItem: vi.fn(() => ({
+        text: '',
+        tooltip: '',
+        command: '',
+        show: vi.fn(),
+        hide: vi.fn(),
+        dispose: vi.fn()
+      })),
+      withProgress: vi.fn(async (_options, task) => {
+        return await task();
+      }),
       showInformationMessage: vi.fn()
     },
     ExtensionContext: vi.fn()

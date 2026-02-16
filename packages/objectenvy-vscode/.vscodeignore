@@ -3,6 +3,7 @@
 .gitignore
 .editorconfig
 tsconfig.json
+*.tsbuildinfo
 vitest.config.ts
 *.log
 node_modules/
