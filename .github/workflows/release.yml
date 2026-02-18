@@ -34,6 +34,9 @@ jobs:
           cache: 'pnpm'
           registry-url: 'https://registry.npmjs.org'
 
+      - name: Install npm v11 (OIDC fix)
+        run: npm install -g npm@11
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -62,7 +65,7 @@ jobs:
             PACKAGES_TO_PUBLISH=$(node -e "const s=require('./.changeset/status.json'); console.log((s.releases||[]).map(r=>r.name).join(' '));")
             echo "Packages to publish: $PACKAGES_TO_PUBLISH"
 
-            pnpm version
+            pnpm changeset:version
             
             git add -A
             git commit -m "chore: version packages" || echo "No version changes to commit"
