@@ -19,7 +19,8 @@
     "clean": "pnpm -r clean && rm -rf dist coverage",
     "changeset": "changeset",
     "version": "changeset version",
-    "release": "pnpm build && pnpm -r --filter=objectenvy --filter=objectenvy-cli publish"
+    "release": "pnpm build && pnpm -r --filter=objectenvy --filter=objectenvy-cli publish",
+    "prepare": "simple-git-hooks"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.8",
@@ -35,11 +36,16 @@
     "type-fest": "^5.4.4",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18",
-    "zod": "^4.3.6"
+    "zod": "^4.3.6",
+    "simple-git-hooks": "^2.13.1"
   },
   "engines": {
     "node": ">=20.0.0",
     "pnpm": ">=9.0.0"
   },
-  "packageManager": "pnpm@9.15.0"
+  "packageManager": "pnpm@10.6.2",
+  "simple-git-hooks": {
+    "pre-commit": "pnpm lint-staged",
+    "pre-push": "pnpm run type-check"
+  }
 }
