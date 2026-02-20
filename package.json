@@ -20,7 +20,9 @@
     "changeset": "changeset",
     "version": "changeset version",
     "release": "pnpm build && pnpm -r --filter=objectenvy --filter=objectenvy-cli publish",
-    "prepare": "simple-git-hooks"
+    "prepare": "simple-git-hooks",
+    "changeset:version": "changeset version",
+    "changeset:publish": "pnpm run build && changeset publish"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.8",
