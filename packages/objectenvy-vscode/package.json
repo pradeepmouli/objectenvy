@@ -103,7 +103,7 @@
     "build": "tsgo -p tsconfig.json",
     "build:native": "tsgo -p tsconfig.json",
     "dev": "tsx watch src/extension.ts",
-    "check:native": "tsgo --noEmit -p tsconfig.json",
+    "type-check": "tsgo --noEmit -p tsconfig.json",
     "test": "vitest",
     "test:integration": "pnpm run build && node ./tests/integration/runTests.mjs",
     "package": "vsce package --no-dependencies",
