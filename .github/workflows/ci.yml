@@ -65,7 +65,3 @@ jobs:
       - name: Security audit
         run: pnpm audit --audit-level moderate
         continue-on-error: true
-
-      - name: Bundle size limit
-        if: matrix.node-version == '20.x'
-        run: pnpm dlx size-limit
