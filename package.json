@@ -49,6 +49,6 @@
   "packageManager": "pnpm@10.6.2",
   "simple-git-hooks": {
     "pre-commit": "pnpm lint-staged",
-    "pre-push": "pnpm run type-check"
+    "pre-push": "[ -n \"$CI\" ] || pnpm run type-check"
   }
 }
