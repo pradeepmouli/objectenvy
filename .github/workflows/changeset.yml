@@ -82,6 +82,13 @@ jobs:
           echo "Created changeset ($CHANGE_TYPE):"
           cat .changeset/${TIMESTAMP}.md
 
+      - name: Ensure required labels exist
+        run: |
+          gh label create "changelog" --color "0075ca" --description "Changelog entries" --force
+          gh label create "automated" --color "ededed" --description "Automated changes (bots, CI/CD)" --force
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v8
         with:
