@@ -41,7 +41,9 @@
     "lint": "oxlint src",
     "format": "oxfmt src",
     "format:check": "oxfmt --check src",
-    "type-check": "tsgo --noEmit -p tsconfig.json"
+    "type-check": "tsgo --noEmit -p tsconfig.json",
+    "clean": "rm -rf dist tsconfig.tsbuildinfo",
+    "prepublishOnly": "npm run clean && npm run build"
   },
   "dependencies": {
     "commander": "^14.0.3",
