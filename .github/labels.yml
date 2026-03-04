@@ -105,6 +105,10 @@
   color: 'ededed'
   description: 'Automated changes (bots, CI/CD)'
 
+- name: 'changelog'
+  color: '0075ca'
+  description: 'Changelog entries'
+
 - name: 'breaking change'
   color: 'd73a4a'
   description: 'Breaking API or behavior change'
