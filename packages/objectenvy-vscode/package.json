@@ -111,8 +111,7 @@
     "lint": "oxlint src",
     "format": "oxfmt src",
     "format:check": "oxfmt --check src",
-    "clean": "rm -rf dist tsconfig.tsbuildinfo",
-    "prepublishOnly": "npm run clean && npm run build"
+    "clean": "rm -rf dist tsconfig.tsbuildinfo"
   },
   "devDependencies": {
     "@vscode/test-electron": "^2.5.2",
