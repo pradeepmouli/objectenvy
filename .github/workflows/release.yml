@@ -39,9 +39,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build
-        run: pnpm build
-
       - name: Configure git
         run: |
           git config user.name "github-actions[bot]"
@@ -54,26 +51,13 @@ jobs:
           if [ "$CHANGESET_COUNT" -gt 0 ]; then
             echo "Found $CHANGESET_COUNT changesets, proceeding with publishing..."
 
-            pnpm changeset status --output .changeset/status.json
-            PACKAGES_TO_PUBLISH=$(jq -r '(.releases // []) | map(.name) | join(" ")' .changeset/status.json)
-            echo "Packages to publish: $PACKAGES_TO_PUBLISH"
-
             pnpm changeset:version
 
             git add -A
             git commit -m "chore: version packages" || echo "No version changes to commit"
             git push origin master
 
-            if [ -n "$PACKAGES_TO_PUBLISH" ] && [ "$PACKAGES_TO_PUBLISH" != "null" ]; then
-              echo "Publishing packages: $PACKAGES_TO_PUBLISH"
-              FILTER_ARGS=""
-              for name in $PACKAGES_TO_PUBLISH; do
-                FILTER_ARGS="$FILTER_ARGS --filter $name"
-              done
-              pnpm -r $FILTER_ARGS publish --provenance --access public --no-git-checks
-            else
-              echo "No packages to publish"
-            fi
+            pnpm changeset:publish
           else
             echo "No changesets found, skipping publication"
           fi
