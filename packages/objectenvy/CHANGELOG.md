@@ -1,5 +1,11 @@
 # objectenvy
 
+## 1.3.1
+
+### Patch Changes
+
+- [#57](https://github.com/pradeepmouli/objectenvy/pull/57) [`d7a0cbc`](https://github.com/pradeepmouli/objectenvy/commit/d7a0cbccde5557f2bf0272ca507e3c63d7072106) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - - test: validate full CI/CD automation pipeline
+
 ## 1.3.0
 
 ### Minor Changes
