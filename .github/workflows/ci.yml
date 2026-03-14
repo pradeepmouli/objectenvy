@@ -2,7 +2,12 @@ name: CI
 
 on:
   push:
-    branches: ['**']
+    branches:
+      - master
+      - develop
+      - 'changeset-release/**'
+      - 'claude/**'
+      - 'copilot/**'
   pull_request:
     branches: [master, develop]
 

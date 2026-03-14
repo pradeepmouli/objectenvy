@@ -520,11 +520,14 @@ export function objectEnvy<T extends EnviableObject = EnviableObject>(
     const mergedOptions = { ...defaultOptions, ...overrides };
     const env = mergedOptions.env ?? process.env;
 
-    // Create cache key from overridable options only (schema is fixed per objectEnvy instance)
+    // Create cache key from all overridable options (schema is fixed per objectEnvy instance)
     const optionsKey = JSON.stringify({
       prefix: mergedOptions.prefix,
       coerce: mergedOptions.coerce ?? true,
-      delimiter: mergedOptions.delimiter ?? '_'
+      delimiter: mergedOptions.delimiter ?? '_',
+      include: mergedOptions.include,
+      exclude: mergedOptions.exclude,
+      nonNestingPrefixes: mergedOptions.nonNestingPrefixes
     });
 
     // Check cache
