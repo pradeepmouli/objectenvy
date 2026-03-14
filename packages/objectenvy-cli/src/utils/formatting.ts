@@ -60,13 +60,6 @@ export function escapeQuotes(value: string): string {
 }
 
 /**
- * Flatten nested object field names
- */
-export function flattenFieldName(baseName: string, nestedPath: string): string {
-  return `${baseName}.${nestedPath}`;
-}
-
-/**
  * Add prefix to environment variable key
  */
 export function addPrefix(key: string, prefix?: string): string {

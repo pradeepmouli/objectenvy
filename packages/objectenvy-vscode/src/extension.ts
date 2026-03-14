@@ -13,6 +13,8 @@ import {
   TypeNode
 } from 'ts-morph';
 
+const textEncoder = new TextEncoder();
+
 let objectenvyModulePromise: Promise<typeof import('objectenvy')> | null = null;
 
 async function getObjectenvyModule(): Promise<typeof import('objectenvy')> {
@@ -21,6 +23,27 @@ async function getObjectenvyModule(): Promise<typeof import('objectenvy')> {
   }
 
   return objectenvyModulePromise;
+}
+
+/**
+ * Parse .env content string into a key-value record
+ */
+function parseEnvContent(content: string): Record<string, string> {
+  const env: Record<string, string> = {};
+  const lines = content.split('\n');
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const equalsIndex = trimmed.indexOf('=');
+    if (equalsIndex === -1) continue;
+    const key = trimmed.substring(0, equalsIndex).trim();
+    const value = trimmed
+      .substring(equalsIndex + 1)
+      .trim()
+      .replace(/^["']|["']$/g, '');
+    env[key] = value;
+  }
+  return env;
 }
 
 /**
@@ -215,8 +238,7 @@ async function handleGenerateEnv(outputChannel: vscode.OutputChannel): Promise<v
     }
 
     const envUri = vscode.Uri.joinPath(workspaceFolder.uri, '.env.template');
-    const encoder = new TextEncoder();
-    await vscode.workspace.fs.writeFile(envUri, encoder.encode(envContent));
+    await vscode.workspace.fs.writeFile(envUri, textEncoder.encode(envContent));
 
     const envDoc = await vscode.workspace.openTextDocument(envUri);
     await vscode.window.showTextDocument(envDoc, { viewColumn: vscode.ViewColumn.Beside });
@@ -284,21 +306,7 @@ async function handleGenerateTypes(outputChannel: vscode.OutputChannel): Promise
 
     const content = document.getText();
 
-    // Parse .env content
-    const env: Record<string, string> = {};
-    const lines = content.split('\n');
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith('#')) continue;
-      const equalsIndex = trimmed.indexOf('=');
-      if (equalsIndex === -1) continue;
-      const key = trimmed.substring(0, equalsIndex).trim();
-      const value = trimmed
-        .substring(equalsIndex + 1)
-        .trim()
-        .replace(/^["']|["']$/g, '');
-      env[key] = value;
-    }
+    const env = parseEnvContent(content);
 
     const { objectify } = await getObjectenvyModule();
 
@@ -342,8 +350,7 @@ async function handleGenerateTypes(outputChannel: vscode.OutputChannel): Promise
     }
 
     const tsUri = vscode.Uri.joinPath(workspaceFolder.uri, finalFilename);
-    const encoder = new TextEncoder();
-    await vscode.workspace.fs.writeFile(tsUri, encoder.encode(tsContent));
+    await vscode.workspace.fs.writeFile(tsUri, textEncoder.encode(tsContent));
 
     const tsDoc = await vscode.workspace.openTextDocument(tsUri);
     await vscode.window.showTextDocument(tsDoc, { viewColumn: vscode.ViewColumn.Beside });
@@ -429,21 +436,7 @@ async function handleConvertRequest(
         } else if (message.from === 'json') {
           intermediateObj = JSON.parse(message.input);
         } else if (message.from === 'env') {
-          // Parse env to object first
-          const env: Record<string, string> = {};
-          const lines = message.input.split('\n');
-          for (const line of lines) {
-            const trimmed = line.trim();
-            if (!trimmed || trimmed.startsWith('#')) continue;
-            const equalsIndex = trimmed.indexOf('=');
-            if (equalsIndex === -1) continue;
-            const key = trimmed.substring(0, equalsIndex).trim();
-            const value = trimmed
-              .substring(equalsIndex + 1)
-              .trim()
-              .replace(/^["']|["']$/g, '');
-            env[key] = value;
-          }
+          const env = parseEnvContent(message.input);
           intermediateObj = objectify({ env, coerce: true });
         } else {
           throw new Error(`Unsupported input format: ${message.from}`);
@@ -653,8 +646,7 @@ async function handleCreateFile(content: string, filename: string): Promise<void
   }
 
   const uri = vscode.Uri.joinPath(workspaceFolder.uri, filename);
-  const encoder = new TextEncoder();
-  await vscode.workspace.fs.writeFile(uri, encoder.encode(content));
+  await vscode.workspace.fs.writeFile(uri, textEncoder.encode(content));
 
   const doc = await vscode.workspace.openTextDocument(uri);
   await vscode.window.showTextDocument(doc);
