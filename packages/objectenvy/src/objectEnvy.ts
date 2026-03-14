@@ -6,9 +6,55 @@ import type {
   EnviableValue,
   MergeOptions
 } from './types.js';
-import { coerceValue, setNestedValue } from './utils.js';
+import { coerceValue, setNestedValue, toSnakeCase } from './utils.js';
 import type { ToEnv, FromEnv } from './typeUtils.js';
 import type { Merge } from 'type-fest';
+
+/**
+ * Merge two arrays using the specified strategy
+ */
+function mergeArrays(
+  arr1: unknown[],
+  arr2: unknown[],
+  strategy: import('./types.js').ArrayMergeStrategy = 'replace',
+  preferFirst: boolean = false
+): unknown[] {
+  if (strategy === 'concat') {
+    return [...arr1, ...arr2];
+  }
+
+  if (strategy === 'concat-unique') {
+    const result: unknown[] = [...arr1];
+    const seen = new Set<unknown>();
+
+    for (const item of arr1) {
+      if (typeof item !== 'object' || item === null) {
+        seen.add(item);
+      }
+    }
+
+    for (const item of arr2) {
+      if (typeof item !== 'object' || item === null) {
+        if (!seen.has(item)) {
+          result.push(item);
+          seen.add(item);
+        }
+      } else {
+        if (!result.some((existing) => JSON.stringify(existing) === JSON.stringify(item))) {
+          result.push(item);
+        }
+      }
+    }
+
+    return result;
+  }
+
+  // 'replace' strategy (and default fallback)
+  if (preferFirst) {
+    return arr1.length > 0 ? arr1 : arr2;
+  }
+  return arr2;
+}
 
 interface ParsedEntry {
   key: string;
@@ -218,38 +264,18 @@ function generatePathInterpretations(segments: string[], delimiter = '_'): strin
     for (let i = 1; i < n; i++) {
       if (mask & (1 << (i - 1))) {
         // Start a new group
-        path.push(groupToCamelCase(currentGroup, delimiter));
+        path.push(segmentsToFlatCamelCase(currentGroup, delimiter));
         currentGroup = [segments[i]!];
       } else {
         // Continue current group
         currentGroup.push(segments[i]!);
       }
     }
-    path.push(groupToCamelCase(currentGroup, delimiter));
+    path.push(segmentsToFlatCamelCase(currentGroup, delimiter));
     interpretations.push(path);
   }
 
   return interpretations;
-}
-
-/**
- * Convert a group of segments to camelCase
- */
-function groupToCamelCase(group: string[], delimiter = '_'): string {
-  if (delimiter === '_') {
-    return group
-      .map((s, index) => {
-        const lower = s.toLowerCase();
-        return index === 0 ? lower : lower.charAt(0).toUpperCase() + lower.slice(1);
-      })
-      .join('');
-  }
-
-  // For custom delimiters
-  return group
-    .map((segment) => segmentToCamelCase(segment))
-    .map((s, index) => (index === 0 ? s : s.charAt(0).toUpperCase() + s.slice(1)))
-    .join('');
 }
 
 /**
@@ -494,12 +520,14 @@ export function objectEnvy<T extends EnviableObject = EnviableObject>(
     const mergedOptions = { ...defaultOptions, ...overrides };
     const env = mergedOptions.env ?? process.env;
 
-    // Create cache key from options
+    // Create cache key from all overridable options (schema is fixed per objectEnvy instance)
     const optionsKey = JSON.stringify({
       prefix: mergedOptions.prefix,
       coerce: mergedOptions.coerce ?? true,
       delimiter: mergedOptions.delimiter ?? '_',
-      schema: mergedOptions.schema ? JSON.stringify(mergedOptions.schema) : undefined
+      include: mergedOptions.include,
+      exclude: mergedOptions.exclude,
+      nonNestingPrefixes: mergedOptions.nonNestingPrefixes
     });
 
     // Check cache
@@ -570,51 +598,13 @@ export function override<T extends EnviableObject>(
 ): T {
   const { arrayMergeStrategy = 'replace' } = options;
 
-  function mergeArrays(arr1: unknown[], arr2: unknown[]): unknown[] {
-    if (arrayMergeStrategy === 'replace') {
-      return arr1.length > 0 ? arr1 : arr2;
-    }
-
-    if (arrayMergeStrategy === 'concat') {
-      return [...arr1, ...arr2];
-    }
-
-    if (arrayMergeStrategy === 'concat-unique') {
-      const result: unknown[] = [...arr1];
-      const seen = new Set<unknown>();
-
-      for (const item of arr1) {
-        if (typeof item !== 'object' || item === null) {
-          seen.add(item);
-        }
-      }
-
-      for (const item of arr2) {
-        if (typeof item !== 'object' || item === null) {
-          if (!seen.has(item)) {
-            result.push(item);
-            seen.add(item);
-          }
-        } else {
-          if (!result.some((existing) => JSON.stringify(existing) === JSON.stringify(item))) {
-            result.push(item);
-          }
-        }
-      }
-
-      return result;
-    }
-
-    return arr1.length > 0 ? arr1 : arr2;
-  }
-
   const result: any = { ...config };
   for (const [key, value] of Object.entries(defaults)) {
     if (result[key] === undefined) {
       result[key] = value;
     } else if (Array.isArray(value) && Array.isArray(result[key])) {
-      // Both are arrays - use merge strategy
-      result[key] = mergeArrays(result[key], value);
+      // Both are arrays - use merge strategy (preferFirst=true: config array takes precedence)
+      result[key] = mergeArrays(result[key], value, arrayMergeStrategy, true);
     } else if (
       value &&
       typeof value === 'object' &&
@@ -669,53 +659,11 @@ export function merge<T extends EnviableObject, U extends EnviableObject>(
 ): Merge<T, U> {
   const { arrayMergeStrategy = 'replace' } = options;
 
-  function mergeArrays(arr1: unknown[], arr2: unknown[]): unknown[] {
-    if (arrayMergeStrategy === 'replace') {
-      return arr2;
-    }
-
-    if (arrayMergeStrategy === 'concat') {
-      return [...arr1, ...arr2];
-    }
-
-    if (arrayMergeStrategy === 'concat-unique') {
-      // Deduplicate by converting to Set for primitives, or tracking objects
-      const result: unknown[] = [...arr1];
-      const seen = new Set<unknown>();
-
-      // Add primitives from arr1 to seen set
-      for (const item of arr1) {
-        if (typeof item !== 'object' || item === null) {
-          seen.add(item);
-        }
-      }
-
-      // Add items from arr2 that aren't already present
-      for (const item of arr2) {
-        if (typeof item !== 'object' || item === null) {
-          if (!seen.has(item)) {
-            result.push(item);
-            seen.add(item);
-          }
-        } else {
-          // For objects, use a simple reference check
-          if (!result.some((existing) => JSON.stringify(existing) === JSON.stringify(item))) {
-            result.push(item);
-          }
-        }
-      }
-
-      return result;
-    }
-
-    return arr2;
-  }
-
   const result: any = { ...obj1 };
   for (const [key, value] of Object.entries(obj2)) {
     if (Array.isArray(value) && Array.isArray(result[key])) {
-      // Both are arrays - use merge strategy
-      result[key] = mergeArrays(result[key], value);
+      // Both are arrays - use merge strategy (preferFirst=false: obj2 takes precedence)
+      result[key] = mergeArrays(result[key], value, arrayMergeStrategy, false);
     } else if (
       value &&
       typeof value === 'object' &&
@@ -782,7 +730,7 @@ export function envy<T extends EnviableObject>(config: T): ToEnv<T> {
     if (typeof obj === 'object') {
       // Handle nested objects
       for (const [key, value] of Object.entries(obj)) {
-        const screaming = toScreamingSnakeCase(key);
+        const screaming = toSnakeCase(key);
         const newPrefix = prefix ? `${prefix}_${screaming}` : screaming;
         flatten(value, newPrefix);
       }
@@ -797,13 +745,4 @@ export function envy<T extends EnviableObject>(config: T): ToEnv<T> {
 
   flatten(config);
   return env as ToEnv<T>;
-}
-
-/**
- * Convert a camelCase string to SCREAMING_SNAKE_CASE
- */
-function toScreamingSnakeCase(str: string): string {
-  return str
-    .replace(/([a-z0-9])([A-Z])/g, '$1_$2') // Insert underscore before uppercase letters
-    .toUpperCase();
 }

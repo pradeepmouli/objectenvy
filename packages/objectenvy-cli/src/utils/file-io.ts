@@ -8,17 +8,6 @@ import { dirname } from 'path';
 import { createOutputError } from './errors.js';
 
 /**
- * Read file contents
- */
-export async function readFile(filePath: string): Promise<string> {
-  try {
-    return await fs.readFile(filePath, 'utf-8');
-  } catch (error) {
-    throw createOutputError(filePath, `Cannot read file: ${String(error)}`);
-  }
-}
-
-/**
  * Write file with atomic operations (write to temp, then move)
  */
 export async function writeFileAtomic(filePath: string, content: string): Promise<void> {
@@ -26,13 +15,7 @@ export async function writeFileAtomic(filePath: string, content: string): Promis
     const dir = dirname(filePath);
 
     // Ensure directory exists
-    try {
-      await fs.mkdir(dir, { recursive: true });
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== 'EEXIST') {
-        throw error;
-      }
-    }
+    await fs.mkdir(dir, { recursive: true });
 
     // Write to temporary file first
     const tempPath = `${filePath}.tmp`;
@@ -55,18 +38,6 @@ export async function fileExists(filePath: string): Promise<boolean> {
     return true;
   } catch {
     return false;
-  }
-}
-
-/**
- * Get file stats
- */
-export async function getFileSize(filePath: string): Promise<number> {
-  try {
-    const stat = await fs.stat(filePath);
-    return stat.size;
-  } catch (error) {
-    throw createOutputError(filePath, `Cannot get file stats: ${String(error)}`);
   }
 }
 

@@ -36,6 +36,18 @@ describe('toSnakeCase', () => {
     expect(toSnakeCase('port')).toBe('PORT');
     expect(toSnakeCase('debug')).toBe('DEBUG');
   });
+
+  it('handles acronyms followed by words', () => {
+    expect(toSnakeCase('apiURLValue')).toBe('API_URL_VALUE');
+    expect(toSnakeCase('parseJSON')).toBe('PARSE_JSON');
+    expect(toSnakeCase('getHTTPSUrl')).toBe('GET_HTTPS_URL');
+  });
+
+  it('handles digits at word boundaries', () => {
+    expect(toSnakeCase('version2Id')).toBe('VERSION2_ID');
+    expect(toSnakeCase('port3000')).toBe('PORT3000');
+    expect(toSnakeCase('v2Config')).toBe('V2_CONFIG');
+  });
 });
 
 describe('coerceValue', () => {
