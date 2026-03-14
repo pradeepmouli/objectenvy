@@ -8,6 +8,9 @@ on:
       - 'changeset-release/**'
       - 'claude/**'
       - 'copilot/**'
+      - 'dependabot/**'
+      - 'revert-**'
+      - 'test/**'
       - 'bugfix/**'
       - 'hotfix/**'
       - 'refactor/**'
@@ -16,14 +19,7 @@ on:
       - 'implement/**'
       - 'cleanup/**'
       - 'speckit/**'
-      - '*-bugfix/**'
-      - '*-hotfix/**'
-      - '*-refactor/**'
-      - '*-enhance/**'
-      - '*-deprecate/**'
-      - '*-implement/**'
-      - '*-cleanup/**'
-      - '*-speckit/**'
+      - '???-**'
   pull_request:
     branches: [master, develop]
 
