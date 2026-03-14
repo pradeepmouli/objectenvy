@@ -112,10 +112,7 @@ export function activate(context: vscode.ExtensionContext): void {
   outputChannel.appendLine(`Version: ${extensionVersion}`);
   outputChannel.appendLine('Using ObjectEnvy library for conversions');
 
-  const statusBarItem = vscode.window.createStatusBarItem(
-    vscode.StatusBarAlignment.Right,
-    100
-  );
+  const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
   statusBarItem.text = 'ObjectEnvy';
   statusBarItem.tooltip = 'ObjectEnvy: Quick Convert';
   statusBarItem.command = 'objectenvy.quickConvert';

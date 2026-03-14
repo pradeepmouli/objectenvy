@@ -9,9 +9,7 @@ export function toCamelCase(str: string): string {
  * Convert camelCase to SCREAMING_SNAKE_CASE
  */
 export function toSnakeCase(str: string): string {
-  return str
-    .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
-    .toUpperCase();
+  return str.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toUpperCase();
 }
 
 /**

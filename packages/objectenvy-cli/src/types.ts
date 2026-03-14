@@ -89,4 +89,3 @@ export interface GeneratedEnv {
   /** Formatted .env file content */
   content: string;
 }
-

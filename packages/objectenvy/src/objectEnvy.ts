@@ -743,4 +743,3 @@ export function envy<T extends EnviableObject>(config: T): ToEnv<T> {
   flatten(config);
   return env as ToEnv<T>;
 }
-
