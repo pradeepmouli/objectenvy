@@ -16,6 +16,14 @@ on:
       - 'implement/**'
       - 'cleanup/**'
       - 'speckit/**'
+      - '*-bugfix/**'
+      - '*-hotfix/**'
+      - '*-refactor/**'
+      - '*-enhance/**'
+      - '*-deprecate/**'
+      - '*-implement/**'
+      - '*-cleanup/**'
+      - '*-speckit/**'
   pull_request:
     branches: [master, develop]
 
