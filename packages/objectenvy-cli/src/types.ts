@@ -89,3 +89,118 @@ export interface GeneratedEnv {
   /** Formatted .env file content */
   content: string;
 }
+
+// ============================================================================
+// CONFIG-Y-ENV TYPES (.env → TypeScript)
+// ============================================================================
+
+/**
+ * Supported output formats for type generation
+ */
+export type OutputFormat = 'typescript' | 'json-schema' | 'javascript' | 'zod';
+
+/**
+ * Type inference strictness mode
+ */
+export type InferenceMode = 'strict' | 'loose';
+
+/**
+ * Single parsed environment variable with type inference
+ */
+export interface EnvVariable {
+  /** Original key from .env (e.g., "DATABASE_HOST") */
+  key: string;
+  /** String value from .env */
+  value: string;
+  /** Inferred type */
+  inferredType: FieldType;
+  /** True if value is empty */
+  isOptional: boolean;
+}
+
+/**
+ * Result of parsing a .env file
+ */
+export interface ParsedEnv {
+  /** All parsed environment variables */
+  variables: EnvVariable[];
+  /** Metadata about the source file */
+  metadata: {
+    /** Source .env file name */
+    fileName: string;
+    /** Total variables parsed */
+    variableCount: number;
+  };
+}
+
+/**
+ * Configuration options for type/schema generation
+ */
+export interface TypeGeneratorOptions {
+  /** Output format */
+  format: OutputFormat;
+  /** TypeScript interface name */
+  interfaceName: string;
+  /** Type inference mode */
+  inferenceMode: InferenceMode;
+  /** Variable name prefix for filtering */
+  prefix?: string;
+  /** Fields to exclude */
+  exclude?: string[];
+  /** Also generate Zod validation schema */
+  zodSchema?: boolean;
+  /** Include JSDoc comments */
+  comments: boolean;
+}
+
+/**
+ * Complete generated TypeScript output
+ */
+export interface GeneratedTypes {
+  /** Generated code content */
+  content: string;
+  /** Generated Zod schema (if requested) */
+  zodContent?: string;
+}
+
+// ============================================================================
+// SHARED CONVERSION TYPES
+// ============================================================================
+
+/**
+ * Conversion metrics for performance tracking
+ */
+export interface ConversionMetrics {
+  /** Milliseconds to parse input */
+  parseTime: number;
+  /** Milliseconds to generate output */
+  generationTime: number;
+  /** Total execution time */
+  totalTime: number;
+  /** Input file size in bytes */
+  inputSize: number;
+  /** Output size in bytes */
+  outputSize: number;
+  /** Number of fields/variables processed */
+  itemCount: number;
+}
+
+/**
+ * Result of a schema → .env conversion
+ */
+export interface SchemaToEnvResult {
+  /** Generated environment file */
+  generated: GeneratedEnv;
+  /** Performance metrics */
+  metrics: ConversionMetrics;
+}
+
+/**
+ * Result of a .env → types conversion
+ */
+export interface EnvToTypesResult {
+  /** Generated types */
+  generated: GeneratedTypes;
+  /** Performance metrics */
+  metrics: ConversionMetrics;
+}
