@@ -2,24 +2,7 @@ name: CI
 
 on:
   push:
-    branches:
-      - master
-      - develop
-      - 'changeset-release/**'
-      - 'claude/**'
-      - 'copilot/**'
-      - 'dependabot/**'
-      - 'revert-**'
-      - 'test/**'
-      - 'bugfix/**'
-      - 'hotfix/**'
-      - 'refactor/**'
-      - 'enhance/**'
-      - 'deprecate/**'
-      - 'implement/**'
-      - 'cleanup/**'
-      - 'speckit/**'
-      - '[0-9][0-9][0-9]-**'
+    branches-ignore: ["sub**"]
   pull_request:
     branches-ignore: ["sub**"]
 
