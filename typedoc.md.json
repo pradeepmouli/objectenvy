@@ -1,0 +1,12 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["packages/objectenvy/src/index.ts"],
+  "tsconfig": "packages/objectenvy/tsconfig.json",
+  "out": "./docs/api",
+  "plugin": ["typedoc-plugin-markdown"],
+  "excludePrivate": true,
+  "excludeInternal": true,
+  "readme": "none",
+  "includeVersion": true,
+  "treatWarningsAsErrors": false
+}

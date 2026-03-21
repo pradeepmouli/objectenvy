@@ -17,6 +17,9 @@
     "format:check": "pnpm -r format:check",
     "type-check": "pnpm -r type-check",
     "clean": "pnpm -r clean && rm -rf dist coverage",
+    "docs": "typedoc",
+    "docs:md": "typedoc --options typedoc.md.json",
+    "docs:all": "pnpm docs && pnpm docs:md",
     "changeset": "changeset",
     "version": "changeset version",
     "release": "pnpm build && pnpm -r --filter=objectenvy --filter=objectenvy-cli publish",
@@ -34,6 +37,8 @@
     "tslib": "^2.8.1",
     "tsx": "^4.21.0",
     "type-fest": "^5.4.4",
+    "typedoc": "^0.28.17",
+    "typedoc-plugin-markdown": "^4.11.0",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18",
     "zod": "^4.3.6"

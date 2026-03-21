@@ -1,0 +1,30 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["packages/objectenvy/src/index.ts"],
+  "tsconfig": "packages/objectenvy/tsconfig.json",
+  "out": "./docs",
+  "plugin": [],
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "excludeInternal": true,
+  "readme": "README.md",
+  "name": "ObjectEnvy API Documentation",
+  "navigationLinks": {
+    "GitHub": "https://github.com/pradeepmouli/objectenvy"
+  },
+  "hideGenerator": false,
+  "sort": ["source-order"],
+  "categorizeByGroup": false,
+  "defaultCategory": "API",
+  "includeVersion": true,
+  "searchInComments": true,
+  "searchInDocuments": true,
+  "validation": {
+    "notExported": true,
+    "invalidLink": true,
+    "notDocumented": false
+  },
+  "commentStyle": "jsdoc",
+  "treatWarningsAsErrors": false,
+  "gitRevision": "master"
+}
