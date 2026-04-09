@@ -7,6 +7,16 @@ Automatically nests only when multiple entries share a common prefix.
 objectify<T>(): T
 ```
 **Returns:** `T`
+**Overloads:**
+```ts
+objectify(options: Omit<ObjectEnvyOptions<ConfigObject>, "schema" | "env"> & { env?: undefined }): ConfigObject
+```
+```ts
+objectify<E>(options: Omit<ObjectEnvyOptions<ConfigObject>, "schema"> & { env: E }): { [KeyType in string | number | symbol]: UnionToIntersection<{ [K in string]: HasSibling<K, keyof E & string> extends true ? BuildNested<K extends `${Head}_${Tail}` ? Head extends "" ? Tail extends `${(...)}_${(...)}` ? (...) extends (...) ? (...) : (...) : [(...)] : [Head, ...((...) extends (...) ? (...) : (...))[]] : [K], CoercedType<E[K]>> : { [P in string]: CoercedType<E[K]> } }[keyof E & string]>[KeyType] }
+```
+```ts
+objectify<T>(options: ObjectEnvyOptions<output<T>> & { schema: T }): output<T>
+```
 ```ts
 // Smart nesting - only nests when multiple entries share a prefix
 // PORT_NUMBER=1234 LOG_LEVEL=debug LOG_PATH=/var/log
@@ -54,6 +64,10 @@ objectEnvy(defaultOptions: Omit<ObjectEnvyOptions, "schema">): { objectify: (ove
 **Parameters:**
 - `defaultOptions: Omit<ObjectEnvyOptions, "schema">` — 
 **Returns:** `{ objectify: (overrides?: Partial<Omit<ObjectEnvyOptions<ConfigObject>, "schema">>) => ConfigObject; envy: (config: T) => { [KeyType in string | number | symbol]: UnionToIntersection<[T] extends [unknown[]] ? never : [T] extends [object] ? { [K in string]: [(...)] extends [(...)] ? (...) extends (...) ? (...) : (...) : (...) extends (...) ? (...) : (...) }[keyof T & string] : [T] extends [Primitive] ? never : never>[KeyType] } }`
+**Overloads:**
+```ts
+objectEnvy<T>(defaultOptions: ObjectEnvyOptions<T> & { schema: T | ZodObject<any, $strip> }): { objectify: (overrides?: Partial<Omit<ObjectEnvyOptions<T>, "schema">>) => T; envy: (config: T) => { [KeyType in string | number | symbol]: UnionToIntersection<[T] extends [unknown[]] ? never : [T] extends [object] ? { [K in string]: [(...)] extends [(...)] ? (...) extends (...) ? (...) : (...) : (...) extends (...) ? (...) : (...) }[keyof T & string] : [T] extends [Primitive] ? never : never>[KeyType] } }
+```
 ```ts
 const { objectify: loadConfig, envy: toEnv } = objectEnvy({
   prefix: 'APP',
@@ -101,7 +115,7 @@ override<T>(defaults: T, config: Partial<T>, options: MergeOptions): T
 - `defaults: T` — The default values to start with
 - `config: Partial<T>` — The configuration object to override defaults
 - `options: MergeOptions` — default: `{}` — Merge options including array merge strategy
-**Returns:** `T`
+**Returns:** `T` — The defaults with config overrides applied
 ```ts
 const defaults = { port: 3000, log: { level: 'info', path: '/var/log' } };
 const config = { log: { level: 'debug' } };
@@ -125,7 +139,7 @@ merge<T, U>(obj1: T, obj2: U, options: MergeOptions): Merge<T, U>
 - `obj1: T` — The first configuration object
 - `obj2: U` — The second configuration object to merge into the first
 - `options: MergeOptions` — default: `{}` — Merge options including array merge strategy
-**Returns:** `Merge<T, U>`
+**Returns:** `Merge<T, U>` — The merged configuration object
 ```ts
 // Default behavior (replace arrays)
 const config1 = { port: 3000, log: { level: 'info' } };

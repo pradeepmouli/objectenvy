@@ -3,6 +3,27 @@
 ## Types
 
 ### `ObjectEnvyOptions`
+**Properties:**
+- `prefix: string` (optional) — Filter environment variables by prefix.
+e.g., "APP" will only include variables starting with "APP_"
+- `env: EnvLike` (optional) — Custom environment object. Defaults to process.env
+- `schema: T extends ConfigObject ? T | ZodObject<any, $strip> : never` (optional) — Schema for validation and type inference.
+Can be either a Zod schema or a plain object with the same structure as your config.
+Zod schemas will validate, plain objects provide type inference only.
+- `coerce: boolean` (optional) — Whether to automatically coerce values to numbers/booleans
+- `delimiter: string` (optional) — Delimiter used to indicate nesting depth.
+By default, each underscore creates a new nesting level.
+Set to '__' to use double underscores for nesting.
+- `nonNestingPrefixes: string[]` (optional) — Prefix segments that should not trigger nesting even when multiple entries share the prefix.
+For example, keys starting with 'max', 'min', 'is', 'enable', 'disable' will stay flat:
+MAX_CONNECTIONS, MAX_TIMEOUT -> { maxConnections, maxTimeout }
+IS_DEBUG, IS_VERBOSE -> { isDebug, isVerbose }
+- `include: string[]` (optional) — Include only environment variables matching these patterns.
+Matches against the normalized key (after prefix removal, in camelCase).
+If specified, only variables matching at least one pattern will be included.
+- `exclude: string[]` (optional) — Exclude environment variables matching these patterns.
+Matches against the normalized key (after prefix removal, in camelCase).
+Variables matching any pattern will be excluded.
 
 ### `ConfigObject`
 ```ts
@@ -16,6 +37,8 @@ EnviablePrimitive | ConfigObject | EnviableArray
 
 ### `MergeOptions`
 Options for controlling merge behavior
+**Properties:**
+- `arrayMergeStrategy: ArrayMergeStrategy` (optional) — Strategy for merging arrays
 
 ### `ArrayMergeStrategy`
 Strategy for merging arrays when combining configuration objects
