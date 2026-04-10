@@ -1,6 +1,8 @@
 # Functions
 
-## `objectify`
+## objectEnvy
+
+### `objectify`
 Create a typed configuration object from environment variables.
 Automatically nests only when multiple entries share a common prefix.
 ```ts
@@ -55,14 +57,14 @@ const config = objectify({ schema });
 // Returns typed config without validation
 ```
 
-## `objectEnvy`
+### `objectEnvy`
 Create a configuration loader with preset options.
 Returns both objectify and envy functions with memoization.
 ```ts
 objectEnvy(defaultOptions: Omit<ObjectEnvyOptions, "schema">): { objectify: (overrides?: Partial<Omit<ObjectEnvyOptions<ConfigObject>, "schema">>) => ConfigObject; envy: (config: T) => { [KeyType in string | number | symbol]: UnionToIntersection<[T] extends [unknown[]] ? never : [T] extends [object] ? { [K in string]: [(...)] extends [(...)] ? (...) extends (...) ? (...) : (...) : (...) extends (...) ? (...) : (...) }[keyof T & string] : [T] extends [Primitive] ? never : never>[KeyType] } }
 ```
 **Parameters:**
-- `defaultOptions: Omit<ObjectEnvyOptions, "schema">` — 
+- `defaultOptions: Omit<ObjectEnvyOptions, "schema">`
 **Returns:** `{ objectify: (overrides?: Partial<Omit<ObjectEnvyOptions<ConfigObject>, "schema">>) => ConfigObject; envy: (config: T) => { [KeyType in string | number | symbol]: UnionToIntersection<[T] extends [unknown[]] ? never : [T] extends [object] ? { [K in string]: [(...)] extends [(...)] ? (...) extends (...) ? (...) : (...) : (...) extends (...) ? (...) : (...) }[keyof T & string] : [T] extends [Primitive] ? never : never>[KeyType] } }`
 **Overloads:**
 ```ts
@@ -79,7 +81,7 @@ const testConfig = loadConfig({ env: testEnv }); // Override env for testing
 const env = toEnv(config); // Convert config back to env format
 ```
 
-## `envy`
+### `envy`
 Convert a configuration object back to environment variable format.
 Reverses the transformation done by objectify().
 Converts nested camelCase keys to flat SCREAMING_SNAKE_CASE env keys.
@@ -87,7 +89,7 @@ Converts nested camelCase keys to flat SCREAMING_SNAKE_CASE env keys.
 envy<T>(config: T): { [KeyType in string | number | symbol]: UnionToIntersection<[T] extends [unknown[]] ? never : [T] extends [object] ? { [K in string]: [T[K]] extends [unknown[]] ? `${ScreamingSnakeCase<(...), (...)>}` extends "" ? never : Record<`${(...)}`, string> : [(...)[(...)]] extends [object] ? { [K in (...)]: (...) }[(...) & (...)] : [(...)] extends [(...)] ? (...) extends (...) ? (...) : (...) : never }[keyof T & string] : [T] extends [Primitive] ? never : never>[KeyType] }
 ```
 **Parameters:**
-- `config: T` — 
+- `config: T`
 **Returns:** `{ [KeyType in string | number | symbol]: UnionToIntersection<[T] extends [unknown[]] ? never : [T] extends [object] ? { [K in string]: [T[K]] extends [unknown[]] ? `${ScreamingSnakeCase<(...), (...)>}` extends "" ? never : Record<`${(...)}`, string> : [(...)[(...)]] extends [object] ? { [K in (...)]: (...) }[(...) & (...)] : [(...)] extends [(...)] ? (...) extends (...) ? (...) : (...) : never }[keyof T & string] : [T] extends [Primitive] ? never : never>[KeyType] }`
 ```ts
 const config = {
@@ -106,7 +108,7 @@ const env = envy(config);
 // }
 ```
 
-## `override`
+### `override`
 Recursively override default values with a config object with smart array handling
 ```ts
 override<T>(defaults: T, config: Partial<T>, options: MergeOptions): T
@@ -130,7 +132,7 @@ const finalConfig = override(defaults, config, { arrayMergeStrategy: 'concat' })
 // finalConfig = { port: 3000, tags: ['prod', 'v1'] }
 ```
 
-## `merge`
+### `merge`
 Recursively merge two configuration objects with smart array handling
 ```ts
 merge<T, U>(obj1: T, obj2: U, options: MergeOptions): Merge<T, U>
@@ -162,30 +164,32 @@ const merged = merge(config1, config2, { arrayMergeStrategy: 'concat-unique' });
 // merged = { hosts: ['localhost', 'example.com', 'api.example.com'] }
 ```
 
-## `toCamelCase`
+## utils
+
+### `toCamelCase`
 Convert SCREAMING_SNAKE_CASE to camelCase
 ```ts
 toCamelCase(str: string): string
 ```
 **Parameters:**
-- `str: string` — 
+- `str: string`
 **Returns:** `string`
 
-## `toSnakeCase`
+### `toSnakeCase`
 Convert camelCase to SCREAMING_SNAKE_CASE
 ```ts
 toSnakeCase(str: string): string
 ```
 **Parameters:**
-- `str: string` — 
+- `str: string`
 **Returns:** `string`
 
-## `coerceValue`
+### `coerceValue`
 Coerce a string value to the appropriate type
 Supports comma-separated values which will be parsed as arrays
 ```ts
 coerceValue(value: string): string | number | boolean | (string | number | boolean)[]
 ```
 **Parameters:**
-- `value: string` — 
+- `value: string`
 **Returns:** `string | number | boolean | (string | number | boolean)[]`

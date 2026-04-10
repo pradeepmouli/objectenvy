@@ -1,16 +1,19 @@
 ---
 name: objectenvy-workspace
-description: "API reference for objectenvy-workspace Use when working with objectify, objectEnvy, envy, override, merge."
+description: ObjectEnvy monorepo - strongly-typed environment configuration for TypeScript projects
 ---
 
 # objectenvy-workspace
 
+ObjectEnvy monorepo - strongly-typed environment configuration for TypeScript projects
+
 ## When to Use
 
-- Calling `objectify()`, `objectEnvy()`, `envy()`, `override()`, `merge()`, and 3 more
-- Typing with `ObjectEnvyOptions`, `ConfigObject`, `ConfigValue`, `MergeOptions`, `ArrayMergeStrategy`
+- API surface: 8 functions, 10 types
 
 ## Quick Reference
 
-**8 functions** — `objectify`, `objectEnvy`, `envy`, `override`, `merge`, `toCamelCase`, `toSnakeCase`, `coerceValue`
-**10 types** — `ObjectEnvyOptions`, `ConfigObject`, `ConfigValue`, `MergeOptions`, `ArrayMergeStrategy`, `ToEnv`, `FromEnv`, `WithPrefix`, `WithoutPrefix`, `SchemaToEnv`
+**objectEnvy:** `objectify`, `objectEnvy`, `envy`, `override`, `merge`
+**utils:** `toCamelCase`, `toSnakeCase`, `coerceValue`
+**types:** `ObjectEnvyOptions`, `ConfigObject`, `ConfigValue`, `MergeOptions`, `ArrayMergeStrategy`
+**typeUtils:** `ToEnv`, `FromEnv`, `WithPrefix`, `WithoutPrefix`, `SchemaToEnv`

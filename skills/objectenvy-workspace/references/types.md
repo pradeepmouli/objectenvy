@@ -1,6 +1,6 @@
 # Types & Enums
 
-## Types
+## types
 
 ### `ObjectEnvyOptions`
 **Properties:**
@@ -48,6 +48,8 @@ Strategy for merging arrays when combining configuration objects
 ```ts
 "replace" | "concat" | "concat-unique"
 ```
+
+## typeUtils
 
 ### `ToEnv`
 Convert a nested camelCase config type to a flat SCREAMING_SNAKE_CASE env record.
