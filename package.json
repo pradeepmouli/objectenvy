@@ -2,7 +2,18 @@
   "name": "objectenvy-workspace",
   "version": "1.0.0",
   "description": "ObjectEnvy monorepo - strongly-typed environment configuration for TypeScript projects",
-  "keywords": ["config", "configuration", "env", "environment", "typescript", "type-safe", "zod", "nested", "camelcase", "dotenv"],
+  "keywords": [
+    "config",
+    "configuration",
+    "env",
+    "environment",
+    "typescript",
+    "type-safe",
+    "zod",
+    "nested",
+    "camelcase",
+    "dotenv"
+  ],
   "private": true,
   "type": "module",
   "workspaces": [
@@ -40,7 +51,7 @@
     "type-fest": "^5.4.4",
     "typedoc": "^0.28.17",
     "typedoc-plugin-markdown": "^4.11.0",
-    "typedoc-plugin-to-skills": "^0.5.1",
+    "typedoc-plugin-to-skills": "^0.6.0",
     "typescript": "^5.9.3",
     "vitest": "^4.1.0",
     "zod": "^4.3.6"
