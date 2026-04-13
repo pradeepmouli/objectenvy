@@ -2,12 +2,21 @@ import type { z } from 'zod';
 
 export type EnviablePrimitive = string | number | boolean;
 
+/**
+ * Nested configuration object with string keys and recursively nested values.
+ * Exported as `ConfigObject` — represents a parsed environment config tree.
+ */
 export type EnviableObject = {
   [key: string]: EnviableValue;
 };
 
 export type EnviableArray = Array<EnviablePrimitive | EnviableObject>;
 
+/**
+ * A single configuration value — either a primitive string/number/boolean,
+ * an array of primitives/objects, or a nested `ConfigObject`.
+ * Exported as `ConfigValue`.
+ */
 export type EnviableValue = EnviablePrimitive | EnviableObject | EnviableArray;
 
 /**
@@ -37,6 +46,10 @@ export type EnvLike = Record<string, string | undefined>;
 // Depth-limited schema type to prevent excessive type instantiation
 type SchemaWithDepth<T, D extends number = 2> = D extends 0 ? any : z.ZodObject<any> | T;
 
+/**
+ * Configuration options for `objectify()` — controls prefix filtering,
+ * env source, Zod schema validation, camelCase nesting behavior, and include/exclude patterns.
+ */
 export interface ObjectEnvyOptions<T = EnviableObject> {
   /**
    * Filter environment variables by prefix.
