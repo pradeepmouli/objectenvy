@@ -4,6 +4,8 @@ Automatically map `process.env` entries to strongly-typed config objects with ca
 
 > **⚠️ Pre-1.0 software** — APIs are subject to change between minor versions. Pin to exact versions in production. See the [CHANGELOG](./CHANGELOG.md) for breaking changes between releases.
 
+📚 **Documentation:** <https://pradeepmouli.github.io/objectenvy/>
+
 ## Features
 
 - **Schema-Guided Nesting**: When a Zod schema is provided, the structure follows the schema exactly

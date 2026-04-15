@@ -1,0 +1,18 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["../../../packages/objectenvy/src/index.ts"],
+  "tsconfig": "../../../packages/objectenvy/tsconfig.json",
+  "out": "../api",
+  "plugin": ["typedoc-plugin-markdown", "typedoc-vitepress-theme"],
+  "excludeInternal": true,
+  "excludePrivate": true,
+  "readme": "none",
+  "hideBreadcrumbs": false,
+  "useCodeBlocks": true,
+  "expandObjects": true,
+  "indexFormat": "table",
+  "parametersFormat": "table",
+  "propertiesFormat": "table",
+  "typeDeclarationFormat": "table",
+  "sanitizeComments": true
+}

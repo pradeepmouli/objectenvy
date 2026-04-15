@@ -33,6 +33,8 @@
     "docs": "typedoc",
     "docs:md": "typedoc --options typedoc.md.json",
     "docs:all": "pnpm docs && pnpm docs:md",
+    "docs:dev": "pnpm --filter @objectenvy/docs dev",
+    "docs:build": "pnpm --filter @objectenvy/docs build",
     "changeset": "changeset",
     "version": "changeset version",
     "release": "pnpm build && pnpm -r --filter=objectenvy --filter=objectenvy-cli publish",
