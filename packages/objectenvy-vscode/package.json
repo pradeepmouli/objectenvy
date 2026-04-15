@@ -127,5 +127,6 @@
   "dependencies": {
     "objectenvy": "workspace:*",
     "ts-morph": "^27.0.2"
-  }
+  },
+  "author": "Pradeep Mouli <pmouli@mac.com> (https://github.com/pradeepmouli)"
 }

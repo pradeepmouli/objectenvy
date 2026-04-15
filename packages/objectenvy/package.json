@@ -14,7 +14,7 @@
     "camelcase"
   ],
   "license": "MIT",
-  "author": "",
+  "author": "Pradeep Mouli <pmouli@mac.com> (https://github.com/pradeepmouli)",
   "type": "module",
   "private": false,
   "main": "./dist/index.js",

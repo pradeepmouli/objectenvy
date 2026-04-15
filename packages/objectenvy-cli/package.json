@@ -12,7 +12,7 @@
     "generator"
   ],
   "license": "MIT",
-  "author": "",
+  "author": "Pradeep Mouli <pmouli@mac.com> (https://github.com/pradeepmouli)",
   "type": "module",
   "private": false,
   "bin": {
