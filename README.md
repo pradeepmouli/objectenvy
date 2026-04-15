@@ -32,7 +32,7 @@ yarn add objectenvy
 ## Quick Start
 
 ```typescript
-import { config } from 'envyconfig';
+import { config } from 'objectenvy';
 
 // Given these environment variables:
 // PORT_NUMBER=3000          <- single PORT_* entry, stays flat
