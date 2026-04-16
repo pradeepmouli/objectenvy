@@ -10,7 +10,17 @@ export default defineConfig({
   ignoreDeadLinks: true,
   head: [
     ['link', { rel: 'icon', type: 'image/svg+xml', href: '/objectenvy/favicon.svg' }],
+    ['meta', { property: 'og:title', content: 'objectenvy' }],
+    ['meta', { property: 'og:description', content: 'Automatically map process.env to strongly-typed, nested config objects with camelCase fields' }],
+    ['meta', { property: 'og:type', content: 'website' }],
+    ['meta', { property: 'og:url', content: 'https://pradeepmouli.github.io/objectenvy/' }],
+    ['meta', { name: 'twitter:card', content: 'summary' }],
+    ['meta', { name: 'twitter:title', content: 'objectenvy' }],
+    ['meta', { name: 'twitter:description', content: 'Automatically map process.env to strongly-typed, nested config objects with camelCase fields' }],
   ],
+  sitemap: {
+    hostname: 'https://pradeepmouli.github.io/objectenvy'
+  },
   themeConfig: {
     nav: [
       { text: 'Guide', link: '/guide/getting-started' },

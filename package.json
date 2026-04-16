@@ -16,6 +16,10 @@
   ],
   "private": true,
   "license": "MIT",
+  "homepage": "https://pradeepmouli.github.io/objectenvy/",
+  "bugs": {
+    "url": "https://github.com/pradeepmouli/objectenvy/issues"
+  },
   "type": "module",
   "workspaces": [
     "packages/*"
