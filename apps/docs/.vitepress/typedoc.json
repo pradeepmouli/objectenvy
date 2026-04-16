@@ -14,5 +14,13 @@
   "parametersFormat": "table",
   "propertiesFormat": "table",
   "typeDeclarationFormat": "table",
-  "sanitizeComments": true
+  "sanitizeComments": true,
+  "blockTags": [
+    "@useWhen", "@avoidWhen", "@pitfalls", "@config",
+    "@param", "@returns", "@example", "@remarks", "@category",
+    "@throws", "@see", "@deprecated", "@since", "@defaultValue",
+    "@typeParam", "@template", "@public", "@alpha", "@beta",
+    "@internal", "@experimental", "@override", "@virtual",
+    "@readonly", "@sealed"
+  ]
 }
