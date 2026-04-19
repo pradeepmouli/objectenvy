@@ -14,6 +14,12 @@ importers:
       '@changesets/cli':
         specifier: ^2.30.0
         version: 2.30.0(@types/node@25.2.3)
+      '@to-skills/cli':
+        specifier: ^0.2.1
+        version: 0.2.1(commander@14.0.3)
+      '@to-skills/vitepress':
+        specifier: ^0.2.0
+        version: 0.2.0
       '@typescript/native-preview':
         specifier: 7.0.0-dev.20260219.1
         version: 7.0.0-dev.20260219.1
@@ -65,6 +71,9 @@ importers:
       typedoc-plugin-markdown:
         specifier: ^4.11.0
         version: 4.11.0(typedoc@0.28.18(typescript@5.9.3))
+      typedoc-plugin-to-skills:
+        specifier: ^0.6.0
+        version: 0.6.2(typedoc@0.28.18(typescript@5.9.3))
       typedoc-vitepress-theme:
         specifier: ^1.1.2
         version: 1.1.2(typedoc-plugin-markdown@4.11.0(typedoc@0.28.18(typescript@5.9.3)))
@@ -1181,6 +1190,14 @@ packages:
   '@textlint/types@15.5.1':
     resolution: {integrity: sha512-IY1OVZZk8LOOrbapYCsaeH7XSJT89HVukixDT8CoiWMrKGCTCZ3/Kzoa3DtMMbY8jtY777QmPOVCNnR+8fF6YQ==}
 
+  '@to-skills/cli@0.2.1':
+    resolution: {integrity: sha512-gb/DrTjtmwTAMv1gispYkyAN5TlX2BS6GoVJvttqzGqmwlht5LMJKOeGVut3iTLAoV4mVIIrIv8LxuC+eanjDQ==}
+    peerDependencies:
+      commander: '>=12.0.0'
+    peerDependenciesMeta:
+      commander:
+        optional: true
+
   '@to-skills/core@0.10.0':
     resolution: {integrity: sha512-GVcwK3wzp62idDti7asNMHSr+kaeqWXuVXTKvncUkbDr5jGgDVTlgV+GUPgcCO/7qyV9XEKEPk7EUiAdxnEmlA==}
 
@@ -1188,6 +1205,14 @@ packages:
     resolution: {integrity: sha512-COGD8p9qqwBBrnW1uDCbXzGHzSLmVewTrEPBEt4bOXPY0/+RLTw4hggvv+gJhoZoo2FCDSfI5t5DUh5U9ekHFA==}
     peerDependencies:
       typedoc: '>=0.28.0'
+
+  '@to-skills/vitepress@0.2.0':
+    resolution: {integrity: sha512-s4JMollbgR0Xtd8DcskBatLbS83Bat1njjMOUpS6JsCnzHc1HUBY/7tGj2/VocJnWr3f5Q0d8Tjq/Emn9IApwQ==}
+    peerDependencies:
+      vitepress: '>=1.0.0'
+    peerDependenciesMeta:
+      vitepress:
+        optional: true
 
   '@ts-morph/common@0.28.1':
     resolution: {integrity: sha512-W74iWf7ILp1ZKNYXY5qbddNaml7e9Sedv5lvU1V8lftlitkc9Pq1A+jlH23ltDgWYeZFFEqGCD1Ies9hqu3O+g==}
@@ -4314,12 +4339,22 @@ snapshots:
     dependencies:
       '@textlint/ast-node-types': 15.5.1
 
+  '@to-skills/cli@0.2.1(commander@14.0.3)':
+    dependencies:
+      '@to-skills/core': 0.10.0
+    optionalDependencies:
+      commander: 14.0.3
+
   '@to-skills/core@0.10.0': {}
 
   '@to-skills/typedoc@0.11.0(typedoc@0.28.18(typescript@5.9.3))':
     dependencies:
       '@to-skills/core': 0.10.0
       typedoc: 0.28.18(typescript@5.9.3)
+
+  '@to-skills/vitepress@0.2.0':
+    dependencies:
+      '@to-skills/core': 0.10.0
 
   '@ts-morph/common@0.28.1':
     dependencies:

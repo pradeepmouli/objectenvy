@@ -1,0 +1,30 @@
+# @objectenvy/docs
+
+> Documentation site for objectenvy
+
+### API
+
+- `objectify`: Parse `process.env` (or a custom env object) into a strongly-typed, nested, camelCased config object.
+- `objectEnvy`: Create a memoized configuration loader with preset options, returning bound `objectify` and `envy` helpers.
+- `envy`: Serialize a nested camelCased config object back to a flat `SCREAMING_SNAKE_CASE` env record.
+- `override`: Apply default values to a config object, filling in only the keys that are absent in `config`.
+- `merge`: Recursively merge two configuration objects, with `obj2` winning on conflicts.
+- `toCamelCase`: Convert a `SCREAMING_SNAKE_CASE` string to `camelCase`.
+- `toSnakeCase`: Convert a `camelCase` or `PascalCase` string to `SCREAMING_SNAKE_CASE`.
+- `coerceValue`: Coerce a raw environment variable string to its most appropriate JavaScript type.
+
+## Optional
+
+### Types
+
+- `ConfigObject`: Nested configuration object with string keys and recursively nested values.
+Exported as `ConfigObject` — represents a parsed environment config tree.
+- `ConfigValue`: A single configuration value — either a primitive string/number/boolean,
+an array of primitives/objects, or a nested `ConfigObject`.
+- `ArrayMergeStrategy`: Strategy for merging arrays when combining configuration objects via `merge()` or `override()`.
+- `ToEnv`: Convert a nested camelCase config type to a flat `SCREAMING_SNAKE_CASE` env record, preserving
+string literal and template literal types.
+- `FromEnv`: Convert a flat `SCREAMING_SNAKE_CASE` env record type to a nested camelCase config type.
+- `WithPrefix`: Add a `Prefix_` to all keys in an env record type.
+- `WithoutPrefix`: Remove a `Prefix_` from all keys in an env record type, keeping only the matching keys.
+- `SchemaToEnv`: Extract the flat `SCREAMING_SNAKE_CASE` env record type from a Zod schema or a plain config type.

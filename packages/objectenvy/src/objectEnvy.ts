@@ -410,24 +410,67 @@ function buildConfigWithSchema(
 }
 
 /**
- * Create a typed configuration object from environment variables.
- * Automatically nests only when multiple entries share a common prefix.
+ * Parse `process.env` (or a custom env object) into a strongly-typed, nested, camelCased config object.
+ *
+ * @remarks
+ * Without a schema, nesting is determined heuristically: a prefix is nested only when two or more
+ * environment variables share it. A single `PORT_NUMBER` key becomes `{ portNumber }` (flat); two
+ * `LOG_LEVEL` + `LOG_PATH` keys become `{ log: { level, path } }` (nested). Segments in
+ * `nonNestingPrefixes` (`max`, `min`, `is`, `enable`, `disable` by default) are always kept flat.
+ *
+ * When a Zod schema is provided, schema structure governs nesting — the heuristic is bypassed —
+ * and the parsed output is validated against the schema. An invalid value throws a `ZodError`.
+ *
+ * String values are coerced to `number` or `boolean` unless `coerce: false` is set. Comma-separated
+ * strings are parsed into arrays.
+ *
+ * @param options - Optional configuration controlling prefix, env source, schema, coercion, and nesting.
+ * @returns A nested camelCased config object. Type is inferred from the Zod schema, or from the
+ *   env source via `FromEnv`, or falls back to `EnviableObject`.
+ *
+ * @throws {ZodError} When a Zod schema is provided and the parsed config fails validation.
+ *
+ * @useWhen
+ * - You need to turn raw `process.env` into a typed, nested config object at application startup.
+ * - You have a Zod schema and want validated, fully-typed config in a single call.
+ * - You want to scope config to one namespace using `prefix: 'APP'` and strip the prefix from keys.
+ * - You use double-underscore env naming (`LOG__LEVEL`) and want `{ log: { level } }` nesting.
+ *
+ * @avoidWhen
+ * - You need per-variable access with `.required()` / `.asInt()` semantics — use `env-var` instead.
+ * - You already have a fully validated config object and just want to merge defaults — use `override()`.
+ * - You need multiple env sources (files + remote secrets) — load them first, then pass as `env:`.
+ *
+ * @pitfalls
+ * - NEVER rely on heuristic nesting for shared prefixes in production — BECAUSE adding a second
+ *   `PORT_*` variable later silently restructures `{ portNumber }` into `{ port: { number } }`,
+ *   breaking all downstream key accesses without a type error at the call site. Prefer a Zod schema.
+ * - NEVER pass a non-`SCREAMING_SNAKE_CASE` env object when relying on `FromEnv` types — BECAUSE
+ *   the type utility assumes keys are uppercase snake_case; mixed-case keys produce incorrect types.
+ * - NEVER use `coerce: true` (the default) if a value looks like a number but must stay a string —
+ *   BECAUSE `'01'` becomes `1` (integer parse), losing the leading zero.
+ * - NEVER pass a mutable reference to the cached env when using `objectEnvy()` — BECAUSE the
+ *   WeakMap cache key is the object reference; mutating `process.env` after caching returns stale data.
  *
  * @example
- * // Smart nesting - only nests when multiple entries share a prefix
+ * // Smart nesting — only nests when multiple entries share a prefix
  * // PORT_NUMBER=1234 LOG_LEVEL=debug LOG_PATH=/var/log
- * const config = objectify();
- * // Returns: { portNumber: 1234, log: { level: 'debug', path: '/var/log' } }
- * // Note: portNumber is flat (only one PORT_* entry), log is nested (multiple LOG_* entries)
+ * import { objectify } from 'objectenvy';
+ * const config = objectify({ env: process.env });
+ * // { portNumber: 1234, log: { level: 'debug', path: '/var/log' } }
+ * // portNumber is flat (only one PORT_* entry); log is nested (multiple LOG_* entries)
  *
  * @example
  * // With prefix filtering
  * // APP_PORT=3000 APP_DEBUG=true OTHER_VAR=ignored
- * const config = objectify({ prefix: 'APP' });
- * // Returns: { port: 3000, debug: true }
+ * import { objectify } from 'objectenvy';
+ * const config = objectify({ env: process.env, prefix: 'APP' });
+ * // { port: 3000, debug: true }
  *
  * @example
- * // With Zod schema for validation and type safety
+ * // With Zod schema for validation and guaranteed structure
+ * import { objectify } from 'objectenvy';
+ * import { z } from 'zod';
  * const schema = z.object({
  *   portNumber: z.number(),
  *   log: z.object({
@@ -435,20 +478,18 @@ function buildConfigWithSchema(
  *     path: z.string()
  *   })
  * });
- * const config = objectify({ schema });
- * // Returns typed config with validation
+ * const config = objectify({ env: process.env, schema });
+ * // Throws ZodError if PORT_NUMBER is missing or LOG_LEVEL is not a valid enum value
  *
  * @example
- * // With type-fest Schema (plain object) for type safety without validation
- * const schema = {
- *   portNumber: 0,
- *   log: {
- *     level: '',
- *     path: ''
- *   }
- * } as const;
- * const config = objectify({ schema });
- * // Returns typed config without validation
+ * // Disable coercion to keep all values as strings
+ * import { objectify } from 'objectenvy';
+ * const config = objectify({ env: process.env, coerce: false });
+ * // { port: '3000', debug: 'true' } — no type conversion applied
+ *
+ * @category Parsing
+ * @see {@link objectEnvy} for a memoized factory wrapper
+ * @see {@link envy} for the inverse operation (config → env)
  */
 export function objectify<T extends EnviableObject>(): T;
 export function objectify(
@@ -484,18 +525,54 @@ export function objectify<T extends EnviableObject = EnviableObject>(
 }
 
 /**
- * Create a configuration loader with preset options.
- * Returns both objectify and envy functions with memoization.
+ * Create a memoized configuration loader with preset options, returning bound `objectify` and `envy` helpers.
+ *
+ * @remarks
+ * `objectEnvy` acts as a factory: call it once at module load time with your default options (prefix,
+ * schema, delimiter, etc.) and it returns a pair of functions. The inner `objectify` is memoized per
+ * env-object reference and option-set combination, so repeated calls within the same process return
+ * the same config instance without re-parsing. Pass `{ env: testEnv }` to the inner `objectify` to
+ * override the env source for unit testing without polluting module-level state.
+ *
+ * @param defaultOptions - Default options applied to every inner `objectify()` call. Schema is fixed
+ *   per instance; it cannot be overridden in the inner calls.
+ * @returns An object with a memoized `objectify(overrides?)` and the `envy` converter.
+ *
+ * @useWhen
+ * - You have a single canonical app-config module and want to read config exactly once per process lifecycle.
+ * - You need to inject a different `env` object in tests while keeping the same schema and prefix.
+ * - You want a named handle that bundles both directions of the round-trip (`objectify` + `envy`).
+ *
+ * @avoidWhen
+ * - You need a fresh re-read on every call (e.g., dynamic secrets) — memoization will return stale data.
+ * - You use different schemas in different parts of the app — create separate `objectEnvy` instances instead.
+ *
+ * @pitfalls
+ * - NEVER mutate `process.env` after calling the inner `objectify()` expecting the result to update —
+ *   BECAUSE results are cached by WeakMap keyed on the env object reference; the cached value is returned.
+ * - NEVER share one `objectEnvy` instance across packages that need independent schemas — BECAUSE the
+ *   schema is baked into the instance at creation time and cannot be changed per call.
  *
  * @example
- * const { objectify: loadConfig, envy: toEnv } = objectEnvy({
- *   prefix: 'APP',
- *   schema: appConfigSchema
- * });
+ * // Module-level config singleton with Zod schema
+ * import { objectEnvy } from 'objectenvy';
+ * import { z } from 'zod';
  *
- * const config = loadConfig(); // Uses preset options with caching
- * const testConfig = loadConfig({ env: testEnv }); // Override env for testing
- * const env = toEnv(config); // Convert config back to env format
+ * const schema = z.object({ port: z.number(), debug: z.boolean() });
+ * const { objectify: loadConfig, envy: toEnv } = objectEnvy({ prefix: 'APP', schema });
+ *
+ * export const config = loadConfig();            // memoized; reads process.env once
+ * export const rawEnv = toEnv(config);           // convert back to env format
+ *
+ * @example
+ * // Override env for unit tests
+ * import { objectEnvy } from 'objectenvy';
+ * const { objectify } = objectEnvy({ prefix: 'APP' });
+ * const testConfig = objectify({ env: { APP_PORT: '9000', APP_DEBUG: 'true' } });
+ *
+ * @category Parsing
+ * @see {@link objectify} for the stateless version without memoization
+ * @see {@link envy} for converting config objects back to env format
  */
 export function objectEnvy(defaultOptions: Omit<ObjectEnvyOptions, 'schema'>): {
   objectify: (overrides?: Partial<Omit<ObjectEnvyOptions, 'schema'>>) => EnviableObject;
@@ -572,24 +649,61 @@ export function objectEnvy<T extends EnviableObject = EnviableObject>(
 }
 
 /**
- * Recursively override default values with a config object with smart array handling
- * @param defaults The default values to start with
- * @param config The configuration object to override defaults
- * @param options Merge options including array merge strategy
- * @returns The defaults with config overrides applied
+ * Apply default values to a config object, filling in only the keys that are absent in `config`.
+ *
+ * @remarks
+ * `override` is a one-directional merge: `config` wins. For every key in `defaults`, if `config`
+ * already has a value for that key it is kept; otherwise the default is used. Nested objects are
+ * traversed recursively so deeply-nested defaults are filled in without overwriting any key that
+ * `config` sets at any depth.
+ *
+ * Array merging is controlled by `options.arrayMergeStrategy`:
+ * - `'replace'` (default): the config array replaces the default array entirely.
+ * - `'concat'`: config array followed by any remaining defaults array elements.
+ * - `'concat-unique'`: same as concat but duplicate primitives are removed.
+ *
+ * @param defaults - The base values to fall back to for missing keys.
+ * @param config - The user-supplied values; these always take precedence over `defaults`.
+ * @param options - Merge options, including `arrayMergeStrategy`.
+ * @returns A new object combining `config` (priority) with any keys absent from `config` filled from `defaults`.
+ *
+ * @useWhen
+ * - You want to layer environment config on top of hard-coded application defaults.
+ * - You have partial user-supplied configs and need safe fallback values for unset fields.
+ * - You're building a plugin or middleware layer that injects sensible defaults without overriding user intent.
+ *
+ * @avoidWhen
+ * - You need a symmetric deep merge where neither object has priority — use `merge()` instead.
+ * - You need to merge more than two objects at once — chain multiple `override()` calls.
+ *
+ * @pitfalls
+ * - NEVER mutate the `defaults` or `config` arguments after calling `override()` — BECAUSE the
+ *   returned object is a shallow copy at each level; nested sub-objects are NOT deep-cloned, so
+ *   mutations to deeply nested objects propagate back through the shared reference.
+ * - NEVER rely on `override()` to handle class instances or special objects (Date, Map, Set) — BECAUSE
+ *   the function checks `typeof === 'object'` and recurses, which may produce unexpected results for
+ *   non-plain-object values.
  *
  * @example
+ * import { objectify, override } from 'objectenvy';
+ *
  * const defaults = { port: 3000, log: { level: 'info', path: '/var/log' } };
- * const config = { log: { level: 'debug' } };
- * const finalConfig = override(defaults, config);
- * // finalConfig = { port: 3000, log: { level: 'debug', path: '/var/log' } }
+ * const envConfig = objectify({ env: process.env, prefix: 'APP' });
+ * const config = override(defaults, envConfig);
+ * // { port: 3000, log: { level: 'debug', path: '/var/log' } }
+ * // env wins where it has values; defaults fill missing keys
  *
  * @example
- * // Concatenate arrays instead of replacing
- * const defaults = { port: 3000, tags: ['v1'] };
+ * // Append default tags when env provides its own list
+ * import { override } from 'objectenvy';
+ * const defaults = { tags: ['v1'] };
  * const config = { tags: ['prod'] };
- * const finalConfig = override(defaults, config, { arrayMergeStrategy: 'concat' });
- * // finalConfig = { port: 3000, tags: ['prod', 'v1'] }
+ * const result = override(defaults, config, { arrayMergeStrategy: 'concat' });
+ * // { tags: ['prod', 'v1'] }
+ *
+ * @category Merging
+ * @see {@link merge} for a symmetric deep merge (neither object has priority)
+ * @defaultValue `options.arrayMergeStrategy` defaults to `'replace'`
  */
 export function override<T extends EnviableObject>(
   defaults: T,
@@ -625,32 +739,72 @@ export function override<T extends EnviableObject>(
 }
 
 /**
- * Recursively merge two configuration objects with smart array handling
- * @param obj1 The first configuration object
- * @param obj2 The second configuration object to merge into the first
- * @param options Merge options including array merge strategy
- * @returns The merged configuration object
+ * Recursively merge two configuration objects, with `obj2` winning on conflicts.
+ *
+ * @remarks
+ * `merge` performs a symmetric deep merge: for each key present in `obj2`, its value overwrites the
+ * corresponding key in `obj1`. Nested objects are merged recursively. Arrays are handled according to
+ * `options.arrayMergeStrategy`:
+ * - `'replace'` (default): `obj2`'s array replaces `obj1`'s array.
+ * - `'concat'`: arrays from `obj1` and `obj2` are joined (`obj1` first, then `obj2`).
+ * - `'concat-unique'`: same as concat but duplicate primitive values are removed; object items are
+ *   deduplicated by deep JSON equality.
+ *
+ * The return type is `Merge<T, U>` (from `type-fest`), which correctly models `obj2` keys shadowing
+ * `obj1` keys at the type level.
+ *
+ * @param obj1 - The base configuration object.
+ * @param obj2 - The second configuration object; its keys take precedence over `obj1`.
+ * @param options - Merge options, including `arrayMergeStrategy`.
+ * @returns A new object containing all keys from both inputs, with `obj2` values winning conflicts.
+ *
+ * @useWhen
+ * - You need to combine two configuration objects where neither is the authoritative "defaults" — e.g.,
+ *   merging a base config with a feature-flag overlay.
+ * - You're composing multiple partial config slices loaded from different sources.
+ * - You need array concatenation across config layers (`concat` or `concat-unique`).
+ *
+ * @avoidWhen
+ * - You want one object to be authoritative "defaults" and the other to win — use `override()` instead.
+ * - You need to merge more than two objects — chain `merge(merge(a, b), c)` calls.
+ *
+ * @pitfalls
+ * - NEVER rely on `merge()` to deep-clone the inputs — BECAUSE nested sub-objects are shallow-copied
+ *   at each level, so mutations to deeply nested objects in the result affect the originals.
+ * - NEVER use `'concat-unique'` to deduplicate object items if equality matters beyond JSON serialisation —
+ *   BECAUSE the implementation uses `JSON.stringify` for comparison, which is order-sensitive and ignores
+ *   `undefined` values, `Date` objects, and prototype methods.
+ * - NEVER assume `merge()` handles non-plain objects (Map, Set, Date, class instances) correctly —
+ *   BECAUSE the function checks `typeof === 'object'` and recurses, producing incorrect results for
+ *   these types.
  *
  * @example
- * // Default behavior (replace arrays)
+ * // Deep merge with obj2 winning on shared keys
+ * import { merge } from 'objectenvy';
  * const config1 = { port: 3000, log: { level: 'info' } };
  * const config2 = { log: { path: '/var/log' }, debug: true };
  * const merged = merge(config1, config2);
- * // merged = { port: 3000, log: { level: 'info', path: '/var/log' }, debug: true }
+ * // { port: 3000, log: { level: 'info', path: '/var/log' }, debug: true }
  *
  * @example
- * // Concatenate arrays
+ * // Concatenate arrays from two sources
+ * import { merge } from 'objectenvy';
  * const config1 = { tags: ['prod', 'v1'] };
  * const config2 = { tags: ['api'] };
  * const merged = merge(config1, config2, { arrayMergeStrategy: 'concat' });
- * // merged = { tags: ['prod', 'v1', 'api'] }
+ * // { tags: ['prod', 'v1', 'api'] }
  *
  * @example
- * // Concatenate and deduplicate arrays
+ * // Deduplicate while merging host lists
+ * import { merge } from 'objectenvy';
  * const config1 = { hosts: ['localhost', 'example.com'] };
  * const config2 = { hosts: ['example.com', 'api.example.com'] };
  * const merged = merge(config1, config2, { arrayMergeStrategy: 'concat-unique' });
- * // merged = { hosts: ['localhost', 'example.com', 'api.example.com'] }
+ * // { hosts: ['localhost', 'example.com', 'api.example.com'] }
+ *
+ * @category Merging
+ * @see {@link override} for defaults-style merging where the second argument wins on missing keys only
+ * @defaultValue `options.arrayMergeStrategy` defaults to `'replace'`
  */
 export function merge<T extends EnviableObject, U extends EnviableObject>(
   obj1: T,
@@ -683,25 +837,68 @@ export function merge<T extends EnviableObject, U extends EnviableObject>(
 }
 
 /**
- * Convert a configuration object back to environment variable format.
- * Reverses the transformation done by objectify().
- * Converts nested camelCase keys to flat SCREAMING_SNAKE_CASE env keys.
+ * Serialize a nested camelCased config object back to a flat `SCREAMING_SNAKE_CASE` env record.
+ *
+ * @remarks
+ * `envy` is the inverse of `objectify`: it flattens a nested config tree by joining each key path
+ * with underscores and uppercasing the result. All values are stringified — numbers and booleans
+ * become their string representations. Arrays are serialized as comma-separated strings (e.g.,
+ * `['a', 'b']` → `'a,b'`). Object items inside arrays are JSON-serialized before joining.
+ *
+ * The return type is `ToEnv<T>`, which preserves string literal and template literal types from the
+ * config type all the way into the env record type.
+ *
+ * @param config - A nested camelCased configuration object.
+ * @returns A flat `Record<string, string>` with `SCREAMING_SNAKE_CASE` keys and all values stringified.
+ *
+ * @useWhen
+ * - You need to spawn a child process and want to pass typed config as env variables.
+ * - You're writing a `.env` file from a config object (e.g., for CI scaffolding or test fixtures).
+ * - You use `ToEnv<T>` for compile-time validation and need the runtime values to match.
+ * - You're round-tripping: `objectify()` → mutate config → `envy()` → write back to env.
+ *
+ * @avoidWhen
+ * - You only need the `ToEnv<T>` type at compile time — no need to call `envy()` at runtime.
+ * - The config contains `Date`, `Map`, `Set`, or class instances — `envy()` serializes them as
+ *   `[object Object]` via `String()`.
+ *
+ * @pitfalls
+ * - NEVER rely on `envy()` to round-trip arrays of objects faithfully — BECAUSE object items are
+ *   `JSON.stringify`-ed then joined; when `objectify()` re-reads the comma-separated string, it
+ *   treats it as a string array, not an array of objects.
+ * - NEVER pass `null` or `undefined` values in the config — BECAUSE `envy()` silently skips
+ *   `null`/`undefined` entries, leaving no env key for them; the round-trip loses those fields.
+ * - NEVER expect `envy()` to honour a prefix — BECAUSE it outputs bare `SCREAMING_SNAKE_CASE` keys
+ *   with no prefix. Add the prefix yourself if your deployment expects `APP_PORT` rather than `PORT`.
  *
  * @example
+ * import { envy } from 'objectenvy';
+ *
  * const config = {
  *   portNumber: 3000,
- *   log: {
- *     level: 'debug',
- *     path: '/var/log'
- *   }
+ *   log: { level: 'debug', path: '/var/log' }
  * };
- *
  * const env = envy(config);
- * // {
- * //   PORT_NUMBER: '3000',
- * //   LOG_LEVEL: 'debug',
- * //   LOG_PATH: '/var/log'
- * // }
+ * // { PORT_NUMBER: '3000', LOG_LEVEL: 'debug', LOG_PATH: '/var/log' }
+ *
+ * @example
+ * // Round-trip: objectify → mutate → envy
+ * import { objectify, envy } from 'objectenvy';
+ * const config = objectify({ env: process.env, prefix: 'APP' });
+ * const mutated = { ...config, debug: true };
+ * const newEnv = envy(mutated);
+ * // spawn({ env: { ...process.env, ...newEnv } })
+ *
+ * @example
+ * // Array values are joined as comma-separated strings
+ * import { envy } from 'objectenvy';
+ * const config = { hosts: ['localhost', 'example.com'] };
+ * const env = envy(config);
+ * // { HOSTS: 'localhost,example.com' }
+ *
+ * @category Serialization
+ * @see {@link objectify} for the inverse operation (env → config)
+ * @see {@link ToEnv} for the compile-time type utility
  */
 export function envy<T extends EnviableObject>(config: T): ToEnv<T> {
   const env: Record<string, string> = {};
