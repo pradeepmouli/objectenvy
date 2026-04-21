@@ -115,18 +115,18 @@
     "clean": "rm -rf dist tsconfig.tsbuildinfo"
   },
   "devDependencies": {
+    "@vscode/test-electron": "^2.5.2",
     "@types/node": "^25.6.0",
     "@types/vscode": "^1.116.0",
-    "@vscode/test-electron": "^2.5.2",
-    "@vscode/vsce": "^3.9.1",
-    "mocha": "^11.7.5",
+    "@vscode/vsce": "^3.7.1",
+    "mocha": "^11.7.2",
     "tsx": "^4.21.0",
-    "typescript": "^6.0.3",
-    "vitest": "^4.1.5"
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.4"
   },
   "dependencies": {
     "objectenvy": "workspace:*",
-    "ts-morph": "^28.0.0"
+    "ts-morph": "^27.0.2"
   },
   "author": "Pradeep Mouli <pmouli@mac.com> (https://github.com/pradeepmouli)"
 }
