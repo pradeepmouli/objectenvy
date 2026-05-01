@@ -8,6 +8,7 @@
   "llmsTxtOutDir": "../../public",
   "excludeInternal": true,
   "excludePrivate": true,
+  "excludeExternals": true,
   "readme": "none",
   "hideBreadcrumbs": false,
   "useCodeBlocks": true,
