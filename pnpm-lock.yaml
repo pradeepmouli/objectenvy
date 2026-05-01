@@ -66,17 +66,17 @@ importers:
   apps/docs:
     devDependencies:
       typedoc:
-        specifier: 0.28.18
-        version: 0.28.18(typescript@5.9.3)
+        specifier: ^0.28.19
+        version: 0.28.19(typescript@5.9.3)
       typedoc-plugin-markdown:
         specifier: ^4.11.0
-        version: 4.11.0(typedoc@0.28.18(typescript@5.9.3))
+        version: 4.11.0(typedoc@0.28.19(typescript@5.9.3))
       typedoc-plugin-to-skills:
-        specifier: ^0.6.0
-        version: 0.6.2(typedoc@0.28.18(typescript@5.9.3))
+        specifier: ^0.6.6
+        version: 0.6.6(typedoc@0.28.19(typescript@5.9.3))
       typedoc-vitepress-theme:
         specifier: ^1.1.2
-        version: 1.1.2(typedoc-plugin-markdown@4.11.0(typedoc@0.28.18(typescript@5.9.3)))
+        version: 1.1.2(typedoc-plugin-markdown@4.11.0(typedoc@0.28.19(typescript@5.9.3)))
       vitepress:
         specifier: ^2.0.0-alpha.17
         version: 2.0.0-alpha.17(@types/node@25.6.0)(postcss@8.5.9)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
@@ -1206,11 +1206,6 @@ packages:
 
   '@to-skills/core@1.0.1':
     resolution: {integrity: sha512-+ThSJwQVJB0Hf/97VFBfqxQXlVO305pZorcMY5j6GzRtGFxs1w85Iwjdm+bQTeZnAiUjVh8o2zhmX3Miv544Yw==}
-
-  '@to-skills/typedoc@0.11.0':
-    resolution: {integrity: sha512-COGD8p9qqwBBrnW1uDCbXzGHzSLmVewTrEPBEt4bOXPY0/+RLTw4hggvv+gJhoZoo2FCDSfI5t5DUh5U9ekHFA==}
-    peerDependencies:
-      typedoc: '>=0.28.0'
 
   '@to-skills/typedoc@0.11.4':
     resolution: {integrity: sha512-FFGhyx/tEtzbQQxNFGGdbLO8tNXtwwL1O9izTBaElwrzDPJHa12SsLIakD5NlyeKn+YOOKLGnKFKjxy+5eNVPw==}
@@ -3230,11 +3225,6 @@ packages:
     peerDependencies:
       typedoc: 0.28.x
 
-  typedoc-plugin-to-skills@0.6.2:
-    resolution: {integrity: sha512-d/2Ysq9vwlYTOUq7MaeC/2iB2PZ6hd7s2JlRGm8zKLL3udf8gediRMNkMLxJCDQtlmXqiQbP8tV+W0uRCBYV0A==}
-    peerDependencies:
-      typedoc: '>=0.28.0'
-
   typedoc-plugin-to-skills@0.6.6:
     resolution: {integrity: sha512-iusBTiIW4HuSq3qhDSVZGc9feNq1N7cI4L03n8g63JRG4pJQdg9ZRWe/ZE4OnSLt/m2+Mn2+jHayAr+ArxHzwQ==}
     peerDependencies:
@@ -3244,13 +3234,6 @@ packages:
     resolution: {integrity: sha512-hQvCZRr5uKDqY1bRuY1+eNTNn6d4TE4OP5pnw65Y7WGgajkJW9X1/lVJK2UJpcwCmwkdjw1QIO49H9JQlxWhhw==}
     peerDependencies:
       typedoc-plugin-markdown: '>=4.4.0'
-
-  typedoc@0.28.18:
-    resolution: {integrity: sha512-NTWTUOFRQ9+SGKKTuWKUioUkjxNwtS3JDRPVKZAXGHZy2wCA8bdv2iJiyeePn0xkmK+TCCqZFT0X7+2+FLjngA==}
-    engines: {node: '>= 18', pnpm: '>= 10'}
-    hasBin: true
-    peerDependencies:
-      typescript: 5.0.x || 5.1.x || 5.2.x || 5.3.x || 5.4.x || 5.5.x || 5.6.x || 5.7.x || 5.8.x || 5.9.x || 6.0.x
 
   typedoc@0.28.19:
     resolution: {integrity: sha512-wKh+lhdmMFivMlc6vRRcMGXeGEHGU2g8a2CkPTJjJlwRf1iXbimWIPcFolCqe4E0d/FRtGszpIrsp3WLpDB8Pw==}
@@ -4453,11 +4436,6 @@ snapshots:
   '@to-skills/core@0.10.3': {}
 
   '@to-skills/core@1.0.1': {}
-
-  '@to-skills/typedoc@0.11.0(typedoc@0.28.18(typescript@5.9.3))':
-    dependencies:
-      '@to-skills/core': 0.10.0
-      typedoc: 0.28.18(typescript@5.9.3)
 
   '@to-skills/typedoc@0.11.4(typedoc@0.28.19(typescript@5.9.3))':
     dependencies:
@@ -6661,36 +6639,18 @@ snapshots:
       tunnel: 0.0.6
       underscore: 1.13.7
 
-  typedoc-plugin-markdown@4.11.0(typedoc@0.28.18(typescript@5.9.3)):
-    dependencies:
-      typedoc: 0.28.18(typescript@5.9.3)
-
   typedoc-plugin-markdown@4.11.0(typedoc@0.28.19(typescript@5.9.3)):
     dependencies:
       typedoc: 0.28.19(typescript@5.9.3)
-
-  typedoc-plugin-to-skills@0.6.2(typedoc@0.28.18(typescript@5.9.3)):
-    dependencies:
-      '@to-skills/typedoc': 0.11.0(typedoc@0.28.18(typescript@5.9.3))
-      typedoc: 0.28.18(typescript@5.9.3)
 
   typedoc-plugin-to-skills@0.6.6(typedoc@0.28.19(typescript@5.9.3)):
     dependencies:
       '@to-skills/typedoc': 0.11.4(typedoc@0.28.19(typescript@5.9.3))
       typedoc: 0.28.19(typescript@5.9.3)
 
-  typedoc-vitepress-theme@1.1.2(typedoc-plugin-markdown@4.11.0(typedoc@0.28.18(typescript@5.9.3))):
+  typedoc-vitepress-theme@1.1.2(typedoc-plugin-markdown@4.11.0(typedoc@0.28.19(typescript@5.9.3))):
     dependencies:
-      typedoc-plugin-markdown: 4.11.0(typedoc@0.28.18(typescript@5.9.3))
-
-  typedoc@0.28.18(typescript@5.9.3):
-    dependencies:
-      '@gerrit0/mini-shiki': 3.23.0
-      lunr: 2.3.9
-      markdown-it: 14.1.1
-      minimatch: 10.2.5
-      typescript: 5.9.3
-      yaml: 2.8.3
+      typedoc-plugin-markdown: 4.11.0(typedoc@0.28.19(typescript@5.9.3))
 
   typedoc@0.28.19(typescript@5.9.3):
     dependencies:
