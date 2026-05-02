@@ -598,6 +598,8 @@ export function objectify<T extends EnviableObject = EnviableObject>(
  * }
  * const config = result.data;
  *
+ * @returns `{ success: true; data: T }` on success, or `{ success: false; error: unknown }` on any
+ *   thrown error. When a `transform` that widens the type is provided, `data` is typed as `TOut`.
  * @category Parsing
  * @see {@link objectify} for the throwing variant
  */
