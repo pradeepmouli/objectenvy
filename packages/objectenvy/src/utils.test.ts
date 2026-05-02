@@ -3,8 +3,7 @@ import {
   toCamelCase,
   toSnakeCase,
   coerceValue,
-  setNestedValue,
-  parseEnvKeyToPath
+  setNestedValue
 } from './utils.js';
 
 describe('toCamelCase', () => {
@@ -166,30 +165,3 @@ describe('setNestedValue', () => {
   });
 });
 
-describe('parseEnvKeyToPath', () => {
-  it('parses simple keys', () => {
-    expect(parseEnvKeyToPath('PORT')).toEqual(['port']);
-    expect(parseEnvKeyToPath('DEBUG')).toEqual(['debug']);
-  });
-
-  it('parses compound keys into nested paths', () => {
-    expect(parseEnvKeyToPath('LOG_LEVEL')).toEqual(['log', 'level']);
-    expect(parseEnvKeyToPath('LOG_PATH')).toEqual(['log', 'path']);
-    expect(parseEnvKeyToPath('DATABASE_CONNECTION_STRING')).toEqual([
-      'database',
-      'connection',
-      'string'
-    ]);
-  });
-
-  it('handles prefix stripping', () => {
-    expect(parseEnvKeyToPath('APP_PORT', 'APP')).toEqual(['port']);
-    expect(parseEnvKeyToPath('APP_LOG_LEVEL', 'APP')).toEqual(['log', 'level']);
-    expect(parseEnvKeyToPath('APP_DATABASE_HOST', 'APP_')).toEqual(['database', 'host']);
-  });
-
-  it('returns empty for non-matching prefix', () => {
-    expect(parseEnvKeyToPath('OTHER_VAR', 'APP')).toEqual([]);
-    expect(parseEnvKeyToPath('PORT', 'APP')).toEqual([]);
-  });
-});

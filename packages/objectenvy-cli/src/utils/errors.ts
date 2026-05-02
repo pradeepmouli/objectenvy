@@ -1,5 +1,5 @@
 /**
- * Error handling for env-y-config
+ * Error handling for objectenvy-cli
  * @module utils/errors
  */
 
