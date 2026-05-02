@@ -120,7 +120,6 @@
     "@types/vscode": "^1.118.0",
     "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.9.1",
-    "mocha": "^11.7.5",
     "tsx": "^4.21.0",
     "typescript": "^6.0.3",
     "vitest": "^4.1.5"
