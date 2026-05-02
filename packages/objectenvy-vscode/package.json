@@ -1,5 +1,6 @@
 {
   "name": "objectenvy-vscode",
+  "type": "module",
   "private": true,
   "displayName": "ObjectEnvy Tools",
   "description": "Convert between schemas, .env files, and TypeScript types with real-time preview",

@@ -193,18 +193,19 @@ export interface ObjectEnvyOptions<T = EnviableObject> {
 
   /**
    * Post-parse transform applied after the config has been built and validated.
-   * Receives the fully coerced, validated config object and returns a transformed version.
-   * Use this to compute derived fields from resolved values (e.g. derive a session URL from a
-   * WebSocket URL when no explicit override is set).
+   * Receives the fully coerced, validated config object and may return a wider type — use
+   * dedicated `objectify` overloads to capture the return type when adding derived fields.
    *
    * @example
-   * objectify({
-   *   schema: ConfigSchema,
+   * // Adding a derived field not present in the schema:
+   * const config = objectify({
+   *   schema: z.object({ wsUrl: z.string() }),
    *   transform: (parsed) => ({
    *     ...parsed,
-   *     sessionUrl: parsed.sessionUrl ?? deriveSessionUrl(parsed.wsUrl)
+   *     sessionUrl: deriveSessionUrl(parsed.wsUrl)
    *   })
    * });
+   * // config.sessionUrl is typed as string
    */
   transform?: (parsed: T) => T;
 

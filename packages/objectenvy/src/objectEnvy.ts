@@ -515,28 +515,41 @@ function buildConfigWithSchema(
  * @see {@link envy} for the inverse operation (config → env)
  */
 export function objectify<T extends EnviableObject>(): T;
+// Schema + transform: returns TOut (transform's return type) instead of z.infer<T>.
+export function objectify<T extends ZodObject, TOut extends EnviableObject>(
+  options: Omit<ObjectEnvyOptions<z.infer<T>>, 'transform'> & {
+    schema: T;
+    transform: (parsed: z.infer<T>) => TOut;
+  }
+): TOut;
+export function objectify<T extends ZodObject>(
+  options: ObjectEnvyOptions<z.infer<T>> & { schema: T }
+): z.infer<T>;
+// Transform without schema: returns TOut (transform's return type) instead of T.
+export function objectify<T extends EnviableObject, TOut extends EnviableObject>(
+  options: Omit<ObjectEnvyOptions<T>, 'transform'> & { transform: (parsed: T) => TOut }
+): TOut;
 export function objectify(
   options: Omit<ObjectEnvyOptions, 'schema' | 'env'> & { env?: undefined }
 ): EnviableObject;
 export function objectify<E extends EnvLike>(
   options: Omit<ObjectEnvyOptions, 'schema'> & { env: E }
 ): FromEnv<E>;
-export function objectify<T extends ZodObject>(
-  options: ObjectEnvyOptions<z.infer<T>> & { schema: T }
-): z.infer<T>;
-// General fallback: accepts any ObjectEnvyOptions<T> and returns T. Reached when the more
-// specific overloads above don't match (e.g. schema/env absent, or transform present).
+// General fallback: accepts any ObjectEnvyOptions<T> and returns T.
 export function objectify<T extends EnviableObject>(options: ObjectEnvyOptions<T>): T;
 export function objectify<T extends EnviableObject = EnviableObject>(
   options: ObjectEnvyOptions<T> = {}
 ): T | EnviableObject {
   const rawEnv = (options.env ?? process.env) as Record<string, string | undefined>;
 
-  // Apply defaults factory: fill in missing/undefined keys; actual defined env values always win.
+  // When coerce is on, treat empty strings as absent (same rule applied in buildConfig).
+  const isAbsent = (v: string | undefined) => v === undefined || (!!options.coerce && v === '');
+
+  // Apply defaults factory: fill in missing/undefined/empty keys; actual non-absent env values win.
   const env: Record<string, string | undefined> = options.defaults
     ? {
         ...options.defaults(rawEnv),
-        ...Object.fromEntries(Object.entries(rawEnv).filter(([, v]) => v !== undefined))
+        ...Object.fromEntries(Object.entries(rawEnv).filter(([, v]) => !isAbsent(v)))
       }
     : rawEnv;
 
@@ -588,6 +601,12 @@ export function objectify<T extends EnviableObject = EnviableObject>(
  * @category Parsing
  * @see {@link objectify} for the throwing variant
  */
+export function safeObjectify<T extends EnviableObject, TOut extends EnviableObject>(
+  options: Omit<ObjectEnvyOptions<T>, 'transform'> & { transform: (parsed: T) => TOut }
+): { success: true; data: TOut } | { success: false; error: unknown };
+export function safeObjectify<T extends EnviableObject = EnviableObject>(
+  options?: ObjectEnvyOptions<T>
+): { success: true; data: T } | { success: false; error: unknown };
 export function safeObjectify<T extends EnviableObject = EnviableObject>(
   options: ObjectEnvyOptions<T> = {}
 ): { success: true; data: T } | { success: false; error: unknown } {
@@ -669,23 +688,24 @@ export function objectEnvy<T extends EnviableObject = EnviableObject>(
 
   const objectifyFn = (overrides: Partial<Omit<ObjectEnvyOptions<T>, 'schema'>> = {}) => {
     const mergedOptions = { ...defaultOptions, ...overrides };
+
+    // Functions can't be serialised into a cache key and may differ per call.
+    // Always recompute when transform or defaults are present.
+    if (mergedOptions.transform || mergedOptions.defaults) {
+      return objectify(mergedOptions) as T | EnviableObject;
+    }
+
     const env = mergedOptions.env ?? process.env;
 
-    // Create cache key from all overridable options (schema is fixed per objectEnvy instance).
-    // transform/defaults are functions and can't be serialised — represent as boolean presence
-    // flags (safe because they're fixed at factory-creation time and pure by convention).
     const optionsKey = JSON.stringify({
       prefix: mergedOptions.prefix,
       coerce: mergedOptions.coerce ?? true,
       delimiter: mergedOptions.delimiter ?? '_',
       include: mergedOptions.include,
       exclude: mergedOptions.exclude,
-      nonNestingPrefixes: mergedOptions.nonNestingPrefixes,
-      hasTransform: !!mergedOptions.transform,
-      hasDefaults: !!mergedOptions.defaults
+      nonNestingPrefixes: mergedOptions.nonNestingPrefixes
     });
 
-    // Check cache
     let envCache = cache.get(env);
     if (!envCache) {
       envCache = new Map<string, EnviableObject>();
@@ -697,8 +717,6 @@ export function objectEnvy<T extends EnviableObject = EnviableObject>(
     }
 
     const result: EnviableObject = objectify(mergedOptions) as EnviableObject;
-
-    // Cache the result
     envCache.set(optionsKey, result);
     return result as T | EnviableObject;
   };

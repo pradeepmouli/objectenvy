@@ -630,6 +630,15 @@ describe('objectEnvy (config loader factory)', () => {
     expect(config1).toEqual(config2); // But same values
   });
 
+  it('does not collide when different transform functions are passed as overrides', () => {
+    const factory = objectEnvy({ env: { MY_PORT: '3000' }, coerce: true });
+    const result1 = factory.objectify({ transform: (c) => ({ ...c, tag: 'first' }) });
+    const result2 = factory.objectify({ transform: (c) => ({ ...c, tag: 'second' }) });
+    expect((result1 as Record<string, unknown>)['tag']).toBe('first');
+    expect((result2 as Record<string, unknown>)['tag']).toBe('second');
+  });
+
+
   it('returns typed env for nested config', () => {
     type NestedConfig = {
       database: {
@@ -1333,6 +1342,26 @@ describe('transform option', () => {
     const withTransform = objectify({ env: { PORT: '3000' }, transform: (p) => p });
     expect(withTransform).toEqual(base);
   });
+
+  it('infers TOut return type when transform adds a field not in schema', () => {
+    const schema = z.object({ wsUrl: z.string() });
+    const config = objectify({
+      env: { WS_URL: 'ws://localhost' },
+      schema,
+      transform: (parsed) => ({ ...parsed, sessionUrl: parsed.wsUrl.replace('ws://', 'http://') })
+    });
+    expectTypeOf(config).toHaveProperty('sessionUrl');
+    expect(config.sessionUrl).toBe('http://localhost');
+  });
+
+  it('infers TOut return type when transform adds a field with no schema', () => {
+    const config = objectify({
+      env: { WS_URL: 'ws://localhost:3001' },
+      transform: (parsed) => ({ ...parsed, sessionUrl: String(parsed['wsUrl']).replace('ws://', 'http://') })
+    });
+    expectTypeOf(config).toHaveProperty('sessionUrl');
+    expect(config.sessionUrl).toBe('http://localhost:3001');
+  });
 });
 
 describe('defaults factory option', () => {
@@ -1399,6 +1428,15 @@ describe('empty string treated as absent when coerce: true', () => {
     const schema = z.object({ debug: z.boolean().default(false) });
     const config = objectify({ env: { DEBUG: '' }, schema });
     expect(config).toEqual({ debug: false });
+  });
+
+  it('falls back to defaults factory value when env has empty string and coerce is true', () => {
+    const config = objectify({
+      env: { PORT: '' },
+      coerce: true,
+      defaults: () => ({ PORT: '4000' })
+    });
+    expect(config).toEqual({ port: 4000 });
   });
 });
 
