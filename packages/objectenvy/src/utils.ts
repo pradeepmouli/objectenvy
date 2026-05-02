@@ -102,30 +102,6 @@ export function setNestedValue(obj: Record<string, unknown>, path: string[], val
   }
 }
 
-/**
- * Parse environment variable key into nested path
- * e.g., "LOG_LEVEL" -> ["log", "level"]
- * e.g., "PORT" -> ["port"]
- * e.g., "DATABASE_CONNECTION_STRING" -> ["database", "connection", "string"]
- */
-export function parseEnvKeyToPath(key: string, prefix?: string): string[] {
-  let normalizedKey = key;
-
-  if (prefix) {
-    const prefixWithUnderscore = prefix.endsWith('_') ? prefix : `${prefix}_`;
-    if (key.startsWith(prefixWithUnderscore)) {
-      normalizedKey = key.slice(prefixWithUnderscore.length);
-    } else {
-      return [];
-    }
-  }
-
-  return normalizedKey
-    .toLowerCase()
-    .split('_')
-    .filter((part) => part.length > 0);
-}
-
 const trueEquivalents = new Set(['true', 'yes', 'y']);
 const falseEquivalents = new Set(['false', 'no', 'n']);
 

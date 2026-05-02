@@ -1,4 +1,4 @@
-export { objectify, objectEnvy, envy, override, merge } from './objectEnvy.js';
+export { objectify, safeObjectify, objectEnvy, envy, override, merge, defaultNonNestingPrefixes } from './objectEnvy.js';
 export { toCamelCase, toSnakeCase, coerceValue } from './utils.js';
 export type {
   ObjectEnvyOptions,

@@ -299,6 +299,27 @@ function findMatchingSchemaPath(
 }
 
 /**
+ * Prefix segments that are never treated as nesting roots regardless of how many env vars share them.
+ *
+ * @remarks
+ * When two or more environment variables share a first segment, `objectify()` normally nests them
+ * under that segment. Segments in this list are excluded from that heuristic so they always flatten:
+ * `MAX_CONNECTIONS` + `MAX_TIMEOUT` → `{ maxConnections, maxTimeout }`, never `{ max: { connections, timeout } }`.
+ *
+ * Extend without repeating the defaults:
+ * ```ts
+ * import { objectify, defaultNonNestingPrefixes } from 'objectenvy';
+ * objectify({ nonNestingPrefixes: [...defaultNonNestingPrefixes, 'lsp', 'ws'] });
+ * ```
+ *
+ * @category Parsing
+ */
+export const defaultNonNestingPrefixes: string[] = [
+  'max', 'min', 'is', 'enable', 'disable',
+  'has', 'use', 'show', 'hide', 'allow', 'deny', 'skip', 'force'
+];
+
+/**
  * Build a nested configuration object from environment variables.
  * Only nests when multiple entries share a common prefix (when no schema provided).
  */
@@ -310,7 +331,7 @@ function buildConfig(
     prefix,
     coerce = true,
     delimiter = '_',
-    nonNestingPrefixes = ['max', 'min', 'is', 'enable', 'disable'],
+    nonNestingPrefixes = defaultNonNestingPrefixes,
     include,
     exclude
   } = options;
@@ -342,6 +363,7 @@ function buildConfig(
   for (const entry of entries) {
     const firstSegment = entry.segments[0]!.toLowerCase();
     const count = firstSegmentCounts.get(firstSegment) ?? 0;
+    if (coerce && entry.value === '') continue;
     const finalValue: EnviableValue = coerce ? coerceValue(entry.value) : entry.value;
 
     // Decide whether to nest based on count and non-nesting prefixes
@@ -392,6 +414,7 @@ function buildConfigWithSchema(
     const segments = splitKey(normalizedKey, delimiter);
     if (segments.length === 0) continue;
 
+    if (coerce && value === '') continue;
     const finalValue: EnviableValue = coerce ? coerceValue(value) : value;
 
     // Try to find a matching schema path
@@ -501,27 +524,78 @@ export function objectify<E extends EnvLike>(
 export function objectify<T extends ZodObject>(
   options: ObjectEnvyOptions<z.infer<T>> & { schema: T }
 ): z.infer<T>;
+// General fallback: accepts any ObjectEnvyOptions<T> and returns T. Reached when the more
+// specific overloads above don't match (e.g. schema/env absent, or transform present).
+export function objectify<T extends EnviableObject>(options: ObjectEnvyOptions<T>): T;
 export function objectify<T extends EnviableObject = EnviableObject>(
   options: ObjectEnvyOptions<T> = {}
 ): T | EnviableObject {
-  const env = (options.env ?? process.env) as Record<string, string | undefined>;
+  const rawEnv = (options.env ?? process.env) as Record<string, string | undefined>;
+
+  // Apply defaults factory: fill in missing/undefined keys; actual defined env values always win.
+  const env: Record<string, string | undefined> = options.defaults
+    ? {
+        ...options.defaults(rawEnv),
+        ...Object.fromEntries(Object.entries(rawEnv).filter(([, v]) => v !== undefined))
+      }
+    : rawEnv;
+
+  const { transform } = options;
+  // buildConfig/buildConfigWithSchema only use these fields — pass them explicitly to avoid
+  // variance errors from transform/defaults on the full options type.
+  const buildOpts = {
+    prefix: options.prefix,
+    coerce: options.coerce,
+    delimiter: options.delimiter,
+    nonNestingPrefixes: options.nonNestingPrefixes,
+    include: options.include,
+    exclude: options.exclude
+  };
 
   if (options.schema) {
-    // Use schema-guided building when schema is provided
-    const config = buildConfigWithSchema(env, options.schema, options);
+    const config = buildConfigWithSchema(env, options.schema, buildOpts);
 
-    // If it's a Zod schema, validate and parse
+    let parsed: T;
     if ('_def' in options.schema) {
-      return (options.schema as z.ZodObject<any>).parse(config) as T;
+      parsed = (options.schema as z.ZodObject<any>).parse(config) as T;
+    } else {
+      parsed = config as T;
     }
 
-    // For plain object schemas (type-fest), just return the config
-    return config as T;
+    return transform ? transform(parsed) : parsed;
   }
 
-  // Use smart nesting heuristic when no schema
-  const config = buildConfig(env, options);
-  return config as FromEnv<typeof env>;
+  const config = buildConfig(env, buildOpts) as T;
+  return transform ? transform(config) : config;
+}
+
+/**
+ * Non-throwing variant of {@link objectify}. Returns a discriminated union instead of throwing on
+ * validation failure or transform errors.
+ *
+ * @remarks
+ * Catches all errors including `ZodError` (when a schema is provided) and any error thrown inside
+ * a `transform` callback. On `ZodError`, the original error is available as `result.error`.
+ *
+ * @example
+ * const result = safeObjectify({ env: import.meta.env, prefix: 'VITE', schema: ConfigSchema });
+ * if (!result.success) {
+ *   console.error('Config invalid:', result.error);
+ *   return;
+ * }
+ * const config = result.data;
+ *
+ * @category Parsing
+ * @see {@link objectify} for the throwing variant
+ */
+export function safeObjectify<T extends EnviableObject = EnviableObject>(
+  options: ObjectEnvyOptions<T> = {}
+): { success: true; data: T } | { success: false; error: unknown } {
+  try {
+    return { success: true, data: objectify(options) };
+  } catch (error) {
+    return { success: false, error };
+  }
 }
 
 /**
@@ -597,14 +671,18 @@ export function objectEnvy<T extends EnviableObject = EnviableObject>(
     const mergedOptions = { ...defaultOptions, ...overrides };
     const env = mergedOptions.env ?? process.env;
 
-    // Create cache key from all overridable options (schema is fixed per objectEnvy instance)
+    // Create cache key from all overridable options (schema is fixed per objectEnvy instance).
+    // transform/defaults are functions and can't be serialised — represent as boolean presence
+    // flags (safe because they're fixed at factory-creation time and pure by convention).
     const optionsKey = JSON.stringify({
       prefix: mergedOptions.prefix,
       coerce: mergedOptions.coerce ?? true,
       delimiter: mergedOptions.delimiter ?? '_',
       include: mergedOptions.include,
       exclude: mergedOptions.exclude,
-      nonNestingPrefixes: mergedOptions.nonNestingPrefixes
+      nonNestingPrefixes: mergedOptions.nonNestingPrefixes,
+      hasTransform: !!mergedOptions.transform,
+      hasDefaults: !!mergedOptions.defaults
     });
 
     // Check cache
@@ -618,24 +696,7 @@ export function objectEnvy<T extends EnviableObject = EnviableObject>(
       return envCache.get(optionsKey)! as T | EnviableObject;
     }
 
-    // Compute result using objectify
-    const result: EnviableObject = (
-      'schema' in mergedOptions && mergedOptions.schema
-        ? objectify<z.ZodObject<any>>({
-            ...mergedOptions,
-            schema: mergedOptions.schema
-          } as ObjectEnvyOptions<EnviableObject> & { schema: z.ZodObject<any> } as any)
-        : mergedOptions.env
-          ? objectify({
-              ...mergedOptions,
-              env: mergedOptions.env
-            } as ObjectEnvyOptions<EnviableObject> & { env: EnvLike })
-          : objectify({
-              prefix: mergedOptions.prefix,
-              coerce: mergedOptions.coerce,
-              delimiter: mergedOptions.delimiter
-            })
-    ) as EnviableObject;
+    const result: EnviableObject = objectify(mergedOptions) as EnviableObject;
 
     // Cache the result
     envCache.set(optionsKey, result);

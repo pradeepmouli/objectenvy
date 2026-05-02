@@ -1,5 +1,5 @@
 /**
- * CLI command handler for env-y-config
+ * CLI command handler for objectenvy-cli generate-env
  * @module commands/generate
  */
 

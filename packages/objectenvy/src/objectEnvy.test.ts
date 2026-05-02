@@ -1,6 +1,6 @@
 import { describe, it, expect, expectTypeOf } from 'vitest';
 import { z } from 'zod';
-import { objectify, objectEnvy, envy, override, merge } from './objectEnvy.js';
+import { objectify, safeObjectify, objectEnvy, envy, override, merge, defaultNonNestingPrefixes } from './objectEnvy.js';
 import type { ToEnv, FromEnv } from './typeUtils.js';
 import type { EnvLike } from './types.js';
 
@@ -1275,5 +1275,166 @@ describe('envy (reverse transformation)', () => {
       PORT: '3000',
       HOST: 'localhost'
     });
+  });
+});
+
+describe('defaultNonNestingPrefixes', () => {
+  it('is exported as a mutable string array', () => {
+    expect(Array.isArray(defaultNonNestingPrefixes)).toBe(true);
+    expect(defaultNonNestingPrefixes).toContain('max');
+    expect(defaultNonNestingPrefixes).toContain('is');
+    expect(defaultNonNestingPrefixes).toContain('has');
+    expect(defaultNonNestingPrefixes).toContain('force');
+  });
+
+  it('can be spread to extend without mutation', () => {
+    const extended = [...defaultNonNestingPrefixes, 'lsp', 'ws'];
+    const config = objectify({
+      env: { LSP_URL: 'ws://localhost', LSP_TOKEN: 'abc' },
+      nonNestingPrefixes: extended
+    });
+    expect(config).toEqual({ lspUrl: 'ws://localhost', lspToken: 'abc' });
+  });
+});
+
+describe('transform option', () => {
+  it('applies transform after build when no schema', () => {
+    const config = objectify({
+      env: { WS_URL: 'ws://localhost:3001' },
+      transform: (parsed) => ({ ...parsed, derived: 'added' })
+    });
+    expect(config).toEqual({ wsUrl: 'ws://localhost:3001', derived: 'added' });
+  });
+
+  it('applies transform after Zod parse', () => {
+    const schema = z.object({ wsUrl: z.string() });
+    const config = objectify({
+      env: { WS_URL: 'ws://localhost' },
+      schema,
+      transform: (parsed) => ({ ...parsed, sessionUrl: 'http://localhost/session' })
+    });
+    expect(config).toEqual({ wsUrl: 'ws://localhost', sessionUrl: 'http://localhost/session' });
+  });
+
+  it('transform receives coerced values', () => {
+    const config = objectify({
+      env: { ENABLE_LSP: 'true', PORT: '3000' },
+      transform: (parsed) => {
+        expect(typeof parsed['enableLsp']).toBe('boolean');
+        expect(typeof parsed['port']).toBe('number');
+        return parsed;
+      }
+    });
+    expect(config['enableLsp']).toBe(true);
+  });
+
+  it('identity transform returns same data', () => {
+    const base = objectify({ env: { PORT: '3000' } });
+    const withTransform = objectify({ env: { PORT: '3000' }, transform: (p) => p });
+    expect(withTransform).toEqual(base);
+  });
+});
+
+describe('defaults factory option', () => {
+  it('fills in missing keys', () => {
+    const config = objectify({
+      env: {},
+      defaults: () => ({ WS_URL: 'ws://default:3001' })
+    });
+    expect(config).toEqual({ wsUrl: 'ws://default:3001' });
+  });
+
+  it('actual env values override defaults', () => {
+    const config = objectify({
+      env: { WS_URL: 'ws://override:9000' },
+      defaults: () => ({ WS_URL: 'ws://default:3001' })
+    });
+    expect(config).toEqual({ wsUrl: 'ws://override:9000' });
+  });
+
+  it('undefined env values fall back to defaults', () => {
+    const config = objectify({
+      env: { WS_URL: undefined },
+      defaults: () => ({ WS_URL: 'ws://default:3001' })
+    });
+    expect(config).toEqual({ wsUrl: 'ws://default:3001' });
+  });
+
+  it('defaults factory receives raw env', () => {
+    let receivedEnv: EnvLike | null = null;
+    objectify({
+      env: { APP_MODE: 'production' },
+      defaults: (raw) => {
+        receivedEnv = raw;
+        return {};
+      }
+    });
+    expect(receivedEnv).toEqual({ APP_MODE: 'production' });
+  });
+
+  it('defaults work with Zod schema', () => {
+    const schema = z.object({ port: z.number() });
+    const config = objectify({
+      env: {},
+      schema,
+      defaults: () => ({ PORT: '4000' })
+    });
+    expect(config).toEqual({ port: 4000 });
+  });
+});
+
+describe('empty string treated as absent when coerce: true', () => {
+  it('skips empty string values', () => {
+    const config = objectify({ env: { PORT: '3000', DEBUG: '' } });
+    expect(config).toEqual({ port: 3000 });
+    expect('debug' in config).toBe(false);
+  });
+
+  it('preserves empty strings when coerce: false', () => {
+    const config = objectify({ env: { PORT: '3000', DEBUG: '' }, coerce: false });
+    expect(config).toEqual({ port: '3000', debug: '' });
+  });
+
+  it('allows Zod default to fill in empty-string env var', () => {
+    const schema = z.object({ debug: z.boolean().default(false) });
+    const config = objectify({ env: { DEBUG: '' }, schema });
+    expect(config).toEqual({ debug: false });
+  });
+});
+
+describe('safeObjectify', () => {
+  it('returns success with data on valid input', () => {
+    const result = safeObjectify({ env: { PORT: '3000' } });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data).toEqual({ port: 3000 });
+    }
+  });
+
+  it('returns failure on Zod validation error', () => {
+    const schema = z.object({ port: z.number() });
+    const result = safeObjectify({ env: { PORT: 'not-a-number' }, schema });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBeDefined();
+    }
+  });
+
+  it('returns failure when transform throws', () => {
+    const result = safeObjectify({
+      env: { PORT: '3000' },
+      transform: () => { throw new Error('transform error'); }
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect((result.error as Error).message).toBe('transform error');
+    }
+  });
+
+  it('does not throw on invalid input', () => {
+    const schema = z.object({ required: z.string() });
+    expect(() => safeObjectify({ env: {}, schema })).not.toThrow();
+    const result = safeObjectify({ env: {}, schema });
+    expect(result.success).toBe(false);
   });
 });
