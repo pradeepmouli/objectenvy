@@ -167,7 +167,11 @@ export interface ObjectEnvyOptions<T = EnviableObject> {
    * For example, keys starting with 'max', 'min', 'is', 'enable', 'disable' will stay flat:
    * MAX_CONNECTIONS, MAX_TIMEOUT -> { maxConnections, maxTimeout }
    * IS_DEBUG, IS_VERBOSE -> { isDebug, isVerbose }
-   * @default ['max', 'min', 'is', 'enable', 'disable']
+   *
+   * Defaults to `defaultNonNestingPrefixes`. Extend it without repeating the defaults:
+   * `nonNestingPrefixes: [...defaultNonNestingPrefixes, 'lsp', 'ws']`
+   *
+   * @default defaultNonNestingPrefixes
    */
   nonNestingPrefixes?: string[];
 
@@ -186,4 +190,39 @@ export interface ObjectEnvyOptions<T = EnviableObject> {
    * @example ['secret', 'password'] // Exclude SECRET_*, PASSWORD_* variables
    */
   exclude?: string[];
+
+  /**
+   * Post-parse transform applied after the config has been built and validated.
+   * Receives the fully coerced, validated config object and may return a wider type — use
+   * dedicated `objectify` overloads to capture the return type when adding derived fields.
+   *
+   * @example
+   * // Adding a derived field not present in the schema:
+   * const config = objectify({
+   *   schema: z.object({ wsUrl: z.string() }),
+   *   transform: (parsed) => ({
+   *     ...parsed,
+   *     sessionUrl: deriveSessionUrl(parsed.wsUrl)
+   *   })
+   * });
+   * // config.sessionUrl is typed as string
+   */
+  transform?: (parsed: T) => T;
+
+  /**
+   * Factory for context-aware defaults. Receives the raw env object (before coercion or prefix
+   * stripping) and returns raw env-style key-value pairs that fill in missing or undefined keys.
+   * Actual env values always take precedence over factory defaults.
+   *
+   * @example
+   * objectify({
+   *   prefix: 'VITE',
+   *   defaults: (env) => ({
+   *     VITE_WS_URL: env['MODE'] === 'production'
+   *       ? 'wss://prod.example.com/ws'
+   *       : 'ws://localhost:3001'
+   *   })
+   * });
+   */
+  defaults?: (raw: EnvLike) => Partial<Record<string, string | undefined>>;
 }
