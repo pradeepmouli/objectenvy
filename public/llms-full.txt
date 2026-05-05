@@ -1,0 +1,326 @@
+# @objectenvy/docs
+
+> Documentation site for objectenvy
+
+### objectify
+
+Parse `process.env` (or a custom env object) into a strongly-typed, nested, camelCased config object.
+
+```ts
+objectify<T>(): T
+```
+
+**Returns:** `T`
+
+```ts
+// Smart nesting — only nests when multiple entries share a prefix
+// PORT_NUMBER=1234 LOG_LEVEL=debug LOG_PATH=/var/log
+import { objectify } from 'objectenvy';
+const config = objectify({ env: process.env });
+// { portNumber: 1234, log: { level: 'debug', path: '/var/log' } }
+// portNumber is flat (only one PORT_* entry); log is nested (multiple LOG_* entries)
+```
+```ts
+// With prefix filtering
+// APP_PORT=3000 APP_DEBUG=true OTHER_VAR=ignored
+import { objectify } from 'objectenvy';
+const config = objectify({ env: process.env, prefix: 'APP' });
+// { port: 3000, debug: true }
+```
+```ts
+// With Zod schema for validation and guaranteed structure
+import { objectify } from 'objectenvy';
+import { z } from 'zod';
+const schema = z.object({
+  portNumber: z.number(),
+  log: z.object({
+    level: z.enum(['debug', 'info', 'warn', 'error']),
+    path: z.string()
+  })
+});
+const config = objectify({ env: process.env, schema });
+// Throws ZodError if PORT_NUMBER is missing or LOG_LEVEL is not a valid enum value
+```
+```ts
+// Disable coercion to keep all values as strings
+import { objectify } from 'objectenvy';
+const config = objectify({ env: process.env, coerce: false });
+// { port: '3000', debug: 'true' } — no type conversion applied
+```
+
+### objectEnvy
+
+Create a memoized configuration loader with preset options, returning bound `objectify` and `envy` helpers.
+
+```ts
+objectEnvy(defaultOptions: Omit<ObjectEnvyOptions, "schema">): { objectify: (overrides?: Partial<Omit<ObjectEnvyOptions<ConfigObject>, "schema">>) => ConfigObject; envy: (config: T) => { [KeyType in string | number | symbol]: UnionToIntersection<[T] extends [unknown[]] ? never : [T] extends [object] ? { [K in string]: [(...)] extends [(...)] ? (...) extends (...) ? (...) : (...) : (...) extends (...) ? (...) : (...) }[keyof T & string] : [T] extends [Primitive] ? never : never>[KeyType] } }
+```
+
+**Parameters:**
+- `defaultOptions: Omit<ObjectEnvyOptions, "schema">` — Default options applied to every inner `objectify()` call. Schema is fixed
+  per instance; it cannot be overridden in the inner calls.
+
+**Returns:** `{ objectify: (overrides?: Partial<Omit<ObjectEnvyOptions<ConfigObject>, "schema">>) => ConfigObject; envy: (config: T) => { [KeyType in string | number | symbol]: UnionToIntersection<[T] extends [unknown[]] ? never : [T] extends [object] ? { [K in string]: [(...)] extends [(...)] ? (...) extends (...) ? (...) : (...) : (...) extends (...) ? (...) : (...) }[keyof T & string] : [T] extends [Primitive] ? never : never>[KeyType] } }`
+
+```ts
+// Module-level config singleton with Zod schema
+import { objectEnvy } from 'objectenvy';
+import { z } from 'zod';
+
+const schema = z.object({ port: z.number(), debug: z.boolean() });
+const { objectify: loadConfig, envy: toEnv } = objectEnvy({ prefix: 'APP', schema });
+
+export const config = loadConfig();            // memoized; reads process.env once
+export const rawEnv = toEnv(config);           // convert back to env format
+```
+```ts
+// Override env for unit tests
+import { objectEnvy } from 'objectenvy';
+const { objectify } = objectEnvy({ prefix: 'APP' });
+const testConfig = objectify({ env: { APP_PORT: '9000', APP_DEBUG: 'true' } });
+```
+
+### envy
+
+Serialize a nested camelCased config object back to a flat `SCREAMING_SNAKE_CASE` env record.
+
+```ts
+envy<T>(config: T): { [KeyType in string | number | symbol]: UnionToIntersection<[T] extends [unknown[]] ? never : [T] extends [object] ? { [K in string]: [T[K]] extends [unknown[]] ? `${ScreamingSnakeCase<(...), (...)>}` extends "" ? never : Record<`${(...)}`, string> : [(...)[(...)]] extends [object] ? { [K in (...)]: (...) }[(...) & (...)] : [(...)] extends [(...)] ? (...) extends (...) ? (...) : (...) : never }[keyof T & string] : [T] extends [Primitive] ? never : never>[KeyType] }
+```
+
+**Parameters:**
+- `config: T` — A nested camelCased configuration object.
+
+**Returns:** `{ [KeyType in string | number | symbol]: UnionToIntersection<[T] extends [unknown[]] ? never : [T] extends [object] ? { [K in string]: [T[K]] extends [unknown[]] ? `${ScreamingSnakeCase<(...), (...)>}` extends "" ? never : Record<`${(...)}`, string> : [(...)[(...)]] extends [object] ? { [K in (...)]: (...) }[(...) & (...)] : [(...)] extends [(...)] ? (...) extends (...) ? (...) : (...) : never }[keyof T & string] : [T] extends [Primitive] ? never : never>[KeyType] }`
+
+```ts
+import { envy } from 'objectenvy';
+
+const config = {
+  portNumber: 3000,
+  log: { level: 'debug', path: '/var/log' }
+};
+const env = envy(config);
+// { PORT_NUMBER: '3000', LOG_LEVEL: 'debug', LOG_PATH: '/var/log' }
+```
+```ts
+// Round-trip: objectify → mutate → envy
+import { objectify, envy } from 'objectenvy';
+const config = objectify({ env: process.env, prefix: 'APP' });
+const mutated = { ...config, debug: true };
+const newEnv = envy(mutated);
+// spawn({ env: { ...process.env, ...newEnv } })
+```
+```ts
+// Array values are joined as comma-separated strings
+import { envy } from 'objectenvy';
+const config = { hosts: ['localhost', 'example.com'] };
+const env = envy(config);
+// { HOSTS: 'localhost,example.com' }
+```
+
+### override
+
+Apply default values to a config object, filling in only the keys that are absent in `config`.
+
+```ts
+override<T>(defaults: T, config: Partial<T>, options: MergeOptions): T
+```
+
+**Parameters:**
+- `defaults: T` — The base values to fall back to for missing keys.
+- `config: Partial<T>` — The user-supplied values; these always take precedence over `defaults`.
+- `options: MergeOptions` — Merge options, including `arrayMergeStrategy`.
+
+**Returns:** `T`
+
+```ts
+import { objectify, override } from 'objectenvy';
+
+const defaults = { port: 3000, log: { level: 'info', path: '/var/log' } };
+const envConfig = objectify({ env: process.env, prefix: 'APP' });
+const config = override(defaults, envConfig);
+// { port: 3000, log: { level: 'debug', path: '/var/log' } }
+// env wins where it has values; defaults fill missing keys
+```
+```ts
+// Append default tags when env provides its own list
+import { override } from 'objectenvy';
+const defaults = { tags: ['v1'] };
+const config = { tags: ['prod'] };
+const result = override(defaults, config, { arrayMergeStrategy: 'concat' });
+// { tags: ['prod', 'v1'] }
+```
+
+### merge
+
+Recursively merge two configuration objects, with `obj2` winning on conflicts.
+
+```ts
+merge<T, U>(obj1: T, obj2: U, options: MergeOptions): Merge<T, U>
+```
+
+**Parameters:**
+- `obj1: T` — The base configuration object.
+- `obj2: U` — The second configuration object; its keys take precedence over `obj1`.
+- `options: MergeOptions` — Merge options, including `arrayMergeStrategy`.
+
+**Returns:** `Merge<T, U>`
+
+```ts
+// Deep merge with obj2 winning on shared keys
+import { merge } from 'objectenvy';
+const config1 = { port: 3000, log: { level: 'info' } };
+const config2 = { log: { path: '/var/log' }, debug: true };
+const merged = merge(config1, config2);
+// { port: 3000, log: { level: 'info', path: '/var/log' }, debug: true }
+```
+```ts
+// Concatenate arrays from two sources
+import { merge } from 'objectenvy';
+const config1 = { tags: ['prod', 'v1'] };
+const config2 = { tags: ['api'] };
+const merged = merge(config1, config2, { arrayMergeStrategy: 'concat' });
+// { tags: ['prod', 'v1', 'api'] }
+```
+```ts
+// Deduplicate while merging host lists
+import { merge } from 'objectenvy';
+const config1 = { hosts: ['localhost', 'example.com'] };
+const config2 = { hosts: ['example.com', 'api.example.com'] };
+const merged = merge(config1, config2, { arrayMergeStrategy: 'concat-unique' });
+// { hosts: ['localhost', 'example.com', 'api.example.com'] }
+```
+
+### toCamelCase
+
+Convert a `SCREAMING_SNAKE_CASE` string to `camelCase`.
+
+```ts
+toCamelCase(str: string): string
+```
+
+**Parameters:**
+- `str: string` — A string in `SCREAMING_SNAKE_CASE` or `snake_case` form.
+
+**Returns:** `string`
+
+```ts
+import { toCamelCase } from 'objectenvy';
+toCamelCase('PORT_NUMBER');           // 'portNumber'
+toCamelCase('LOG_LEVEL');             // 'logLevel'
+toCamelCase('DATABASE_HOST');         // 'databaseHost'
+```
+
+### toSnakeCase
+
+Convert a `camelCase` or `PascalCase` string to `SCREAMING_SNAKE_CASE`.
+
+```ts
+toSnakeCase(str: string): string
+```
+
+**Parameters:**
+- `str: string` — A string in `camelCase` or `PascalCase` form.
+
+**Returns:** `string`
+
+```ts
+import { toSnakeCase } from 'objectenvy';
+toSnakeCase('portNumber');     // 'PORT_NUMBER'
+toSnakeCase('logLevel');       // 'LOG_LEVEL'
+toSnakeCase('apiURLValue');    // 'API_URL_VALUE'
+toSnakeCase('parseJSON');      // 'PARSE_JSON'
+```
+
+### coerceValue
+
+Coerce a raw environment variable string to its most appropriate JavaScript type.
+
+```ts
+coerceValue(value: string): string | number | boolean | (string | number | boolean)[]
+```
+
+**Parameters:**
+- `value: string` — A raw string value from an environment variable.
+
+**Returns:** `string | number | boolean | (string | number | boolean)[]`
+
+```ts
+import { coerceValue } from 'objectenvy';
+coerceValue('3000');        // 3000 (number)
+coerceValue('true');        // true (boolean)
+coerceValue('yes');         // true (boolean)
+coerceValue('3.14');        // 3.14 (number)
+coerceValue('localhost');   // 'localhost' (string unchanged)
+coerceValue('a,b,c');       // ['a', 'b', 'c'] (array)
+coerceValue('1,2,3');       // [1, 2, 3] (array of numbers)
+```
+
+### ConfigObject
+
+Nested configuration object with string keys and recursively nested values.
+Exported as `ConfigObject` — represents a parsed environment config tree.
+
+```ts
+type ConfigObject = { [key: string]: ConfigValue }
+```
+
+### ConfigValue
+
+A single configuration value — either a primitive string/number/boolean,
+an array of primitives/objects, or a nested `ConfigObject`.
+Exported as `ConfigValue`.
+
+```ts
+type ConfigValue = EnviablePrimitive | ConfigObject | EnviableArray
+```
+
+### ArrayMergeStrategy
+
+Strategy for merging arrays when combining configuration objects via `merge()` or `override()`.
+
+```ts
+type ArrayMergeStrategy = "replace" | "concat" | "concat-unique"
+```
+
+### ToEnv
+
+Convert a nested camelCase config type to a flat `SCREAMING_SNAKE_CASE` env record, preserving
+string literal and template literal types.
+
+```ts
+type ToEnv = Simplify<UnionToIntersection<FlattenToEnv<T, "", D>>>
+```
+
+### FromEnv
+
+Convert a flat `SCREAMING_SNAKE_CASE` env record type to a nested camelCase config type.
+
+```ts
+type FromEnv = Simplify<UnionToIntersection<{ [K in keyof T & string]: HasSibling<K, keyof T & string> extends true ? BuildNested<SplitKey<K, D>, CoercedType<T[K]>> : { [P in CamelCase<Lowercase<K>>]: CoercedType<T[K]> } }[keyof T & string]>>
+```
+
+### WithPrefix
+
+Add a `Prefix_` to all keys in an env record type.
+
+```ts
+type WithPrefix = { [K in keyof T as K extends string ? `${Prefix}_${K}` : never]: T[K] }
+```
+
+### WithoutPrefix
+
+Remove a `Prefix_` from all keys in an env record type, keeping only the matching keys.
+
+```ts
+type WithoutPrefix = { [K in keyof T as K extends `${Prefix}_${infer Rest}` ? Rest : never]: T[K] }
+```
+
+### SchemaToEnv
+
+Extract the flat `SCREAMING_SNAKE_CASE` env record type from a Zod schema or a plain config type.
+
+```ts
+type SchemaToEnv = T extends { _output: infer O } ? ToEnv<O> : ToEnv<T>
+```
