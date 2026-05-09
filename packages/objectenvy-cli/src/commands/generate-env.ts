@@ -140,7 +140,7 @@ export async function generateCommand(input: string, options: CommandOptions): P
   } catch (error) {
     // Re-throw with better error context
     if (error instanceof Error) {
-      throw new Error(`Failed to generate .env file: ${error.message}`);
+      throw new Error(`Failed to generate .env file: ${error.message}`, { cause: error });
     }
     throw error;
   }

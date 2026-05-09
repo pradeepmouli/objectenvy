@@ -1,0 +1,7 @@
+# Ignore scaffold/template files in skill directories
+.claude/
+.agents/
+
+# Ignore build/utility scripts
+apps/docs/scripts/
+packages/objectenvy-vscode/tests/integration/runTests.mjs

@@ -3,6 +3,7 @@
   "rules": {
     "no-console": "warn",
     "prefer-const": "warn",
+    "no-underscore-dangle": ["warn", { "allow": ["__filename", "__dirname", "_def"] }],
     "no-var": "error",
     "no-case-declarations": "off",
     "no-prototype-builtins": "off",
