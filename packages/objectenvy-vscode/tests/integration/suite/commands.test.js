@@ -1,5 +1,5 @@
-const assert = require('node:assert');
-const vscode = require('vscode');
+import assert from 'node:assert';
+import * as vscode from 'vscode';
 
 suite('ObjectEnvy Tools', () => {
   test('Registers commands', async () => {

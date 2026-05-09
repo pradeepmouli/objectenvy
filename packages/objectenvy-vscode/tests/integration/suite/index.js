@@ -1,52 +1,46 @@
-const fs = require('node:fs');
-const path = require('node:path');
-const Mocha = require('mocha');
+import { readdirSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-function findTestFiles(dirPath) {
-  const entries = fs.readdirSync(dirPath, { withFileTypes: true });
-  const files = [];
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-  for (const entry of entries) {
-    const fullPath = path.join(dirPath, entry.name);
-    if (entry.isDirectory()) {
-      files.push(...findTestFiles(fullPath));
-      continue;
-    }
+const _suites = [];
+let _current = null;
 
-    if (entry.isFile() && entry.name.endsWith('.test.js')) {
-      files.push(fullPath);
+globalThis.suite = (name, fn) => {
+  const s = { name, tests: [] };
+  _suites.push(s);
+  _current = s;
+  fn();
+  _current = null;
+};
+
+globalThis.test = (name, fn) => {
+  (_current ?? { tests: _suites }).tests.push({ name, fn });
+};
+
+export async function run() {
+  const files = readdirSync(__dirname).filter(f => f.endsWith('.test.js'));
+  for (const file of files) {
+    await import(path.join(__dirname, file));
+  }
+
+  let failures = 0;
+  for (const s of _suites) {
+    console.log(`\n  ${s.name}`);
+    for (const { name, fn } of s.tests) {
+      try {
+        await fn();
+        console.log(`    ✓ ${name}`);
+      } catch (err) {
+        console.error(`    ✗ ${name}`);
+        console.error(err);
+        failures++;
+      }
     }
   }
 
-  return files;
-}
-
-function run() {
-  const mocha = new Mocha({
-    ui: 'tdd',
-    color: true,
-  });
-
-  const testsRoot = __dirname;
-  const testFiles = findTestFiles(testsRoot);
-
-  for (const filePath of testFiles) {
-    mocha.addFile(filePath);
+  if (failures > 0) {
+    throw new Error(`${failures} test(s) failed.`);
   }
-
-  return new Promise((resolve, reject) => {
-    try {
-      mocha.run((failures) => {
-        if (failures > 0) {
-          reject(new Error(`${failures} test(s) failed.`));
-          return;
-        }
-        resolve();
-      });
-    } catch (error) {
-      reject(error);
-    }
-  });
 }
-
-module.exports = { run };

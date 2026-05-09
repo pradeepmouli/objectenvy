@@ -543,7 +543,7 @@ export function objectify<T extends EnviableObject = EnviableObject>(
   const rawEnv = (options.env ?? process.env) as Record<string, string | undefined>;
 
   // When coerce is on, treat empty strings as absent (same rule applied in buildConfig).
-  const isAbsent = (v: string | undefined) => v === undefined || (!!options.coerce && v === '');
+  const isAbsent = (v: string | undefined) => v === undefined || (options.coerce !== false && v === '');
 
   // Apply defaults factory: fill in missing/undefined/empty keys; actual non-absent env values win.
   const env: Record<string, string | undefined> = options.defaults
