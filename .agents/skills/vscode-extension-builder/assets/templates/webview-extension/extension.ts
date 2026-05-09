@@ -7,7 +7,7 @@ export function activate(context: vscode.ExtensionContext) {
 	console.log('Extension "webview-extension" is now active');
 
 	// Register command to open webview
-	let disposable = vscode.commands.registerCommand(
+	const disposable = vscode.commands.registerCommand(
 		'extension.openWebview',
 		() => {
 			WebviewPanel.createOrShow(context.extensionUri);

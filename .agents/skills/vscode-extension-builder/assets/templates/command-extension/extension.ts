@@ -8,7 +8,7 @@ export function activate(context: vscode.ExtensionContext) {
 	console.log('Extension "command-extension" is now active');
 
 	// Register Hello World command
-	let helloWorldDisposable = vscode.commands.registerCommand(
+	const helloWorldDisposable = vscode.commands.registerCommand(
 		'extension.helloWorld',
 		() => {
 			vscode.window.showInformationMessage('Hello World from Command Extension!');
@@ -16,7 +16,7 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 
 	// Register Get User Input command
-	let getUserInputDisposable = vscode.commands.registerCommand(
+	const getUserInputDisposable = vscode.commands.registerCommand(
 		'extension.getUserInput',
 		async () => {
 			const name = await vscode.window.showInputBox({

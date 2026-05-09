@@ -611,9 +611,9 @@ function convertObjectToTypeScript(obj: ConfigObject, interfaceName = 'Config'):
     return 'unknown';
   }
 
-  function generateNestedInterface(obj: ConfigObject, indent = '  '): string {
+  function generateNestedInterface(nestedObj: ConfigObject, indent = '  '): string {
     const lines = ['{'];
-    for (const [key, value] of Object.entries(obj)) {
+    for (const [key, value] of Object.entries(nestedObj)) {
       const typeStr = getTypeString(value);
       lines.push(`${indent}${key}: ${typeStr};`);
     }
