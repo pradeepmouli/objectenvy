@@ -45,7 +45,7 @@
     "clean": "rm -rf dist tsconfig.tsbuildinfo"
   },
   "devDependencies": {
-    "@dotenvx/dotenvx": "^1.65.0",
+    "@dotenvx/dotenvx": "^1.66.0",
     "@types/node": "^25.6.2",
     "commander": "^14.0.3",
     "tsx": "^4.21.0",
