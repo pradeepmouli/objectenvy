@@ -48,7 +48,7 @@
     "@to-skills/cli": "^0.3.13",
     "@to-skills/vitepress": "^0.2.25",
     "@typescript/native-preview": "beta",
-    "@vitest/coverage-v8": "^4.1.5",
+    "@vitest/coverage-v8": "^4.1.7",
     "lint-staged": "^17.0.4",
     "oxfmt": "^0.48.0",
     "oxlint": "^1.63.0",
@@ -59,7 +59,7 @@
     "typedoc-plugin-markdown": "^4.11.0",
     "typedoc-plugin-to-skills": "^1.3.0",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.5",
+    "vitest": "^4.1.7",
     "zod": "^4.4.3"
   },
   "engines": {
