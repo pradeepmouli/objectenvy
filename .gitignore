@@ -52,16 +52,3 @@ packages/objectenvy-vscode/.vscode-test/
 docs/
 !apps/docs/
 
-# BEGIN ai-artifacts
-.claude/
-.codex/
-.agents/
-.specify/
-.cursor/
-.continue/
-.aider/
-.roo/
-.windsurf/
-AGENTS.md
-GEMINI.md
-# END ai-artifacts
