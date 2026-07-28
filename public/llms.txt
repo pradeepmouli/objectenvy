@@ -5,6 +5,8 @@
 ### API
 
 - `objectify`: Parse `process.env` (or a custom env object) into a strongly-typed, nested, camelCased config object.
+- `safeObjectify`: Non-throwing variant of objectify. Returns a discriminated union instead of throwing on
+validation failure or transform errors.
 - `objectEnvy`: Create a memoized configuration loader with preset options, returning bound `objectify` and `envy` helpers.
 - `envy`: Serialize a nested camelCased config object back to a flat `SCREAMING_SNAKE_CASE` env record.
 - `override`: Apply default values to a config object, filling in only the keys that are absent in `config`.
@@ -12,6 +14,7 @@
 - `toCamelCase`: Convert a `SCREAMING_SNAKE_CASE` string to `camelCase`.
 - `toSnakeCase`: Convert a `camelCase` or `PascalCase` string to `SCREAMING_SNAKE_CASE`.
 - `coerceValue`: Coerce a raw environment variable string to its most appropriate JavaScript type.
+- `defaultNonNestingPrefixes`: Prefix segments that are never treated as nesting roots regardless of how many env vars share them.
 
 ## Optional
 

@@ -48,6 +48,29 @@ const config = objectify({ env: process.env, coerce: false });
 // { port: '3000', debug: 'true' } — no type conversion applied
 ```
 
+### safeObjectify
+
+Non-throwing variant of objectify. Returns a discriminated union instead of throwing on
+validation failure or transform errors.
+
+```ts
+safeObjectify<T, TOut>(options: Omit<ObjectEnvyOptions<T>, "transform"> & { transform: (parsed: T) => TOut }): { success: true; data: TOut } | { success: false; error: unknown }
+```
+
+**Parameters:**
+- `options: Omit<ObjectEnvyOptions<T>, "transform"> & { transform: (parsed: T) => TOut }` — 
+
+**Returns:** `{ success: true; data: TOut } | { success: false; error: unknown }`
+
+```ts
+const result = safeObjectify({ env: import.meta.env, prefix: 'VITE', schema: ConfigSchema });
+if (!result.success) {
+  console.error('Config invalid:', result.error);
+  return;
+}
+const config = result.data;
+```
+
 ### objectEnvy
 
 Create a memoized configuration loader with preset options, returning bound `objectify` and `envy` helpers.
@@ -323,4 +346,12 @@ Extract the flat `SCREAMING_SNAKE_CASE` env record type from a Zod schema or a p
 
 ```ts
 type SchemaToEnv = T extends { _output: infer O } ? ToEnv<O> : ToEnv<T>
+```
+
+### defaultNonNestingPrefixes
+
+Prefix segments that are never treated as nesting roots regardless of how many env vars share them.
+
+```ts
+const defaultNonNestingPrefixes: string[]
 ```
