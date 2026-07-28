@@ -102,10 +102,10 @@
     }
   },
   "scripts": {
-    "build": "tsgo -p tsconfig.json",
-    "build:native": "tsgo -p tsconfig.json",
+    "build": "tsc -p tsconfig.json",
+    "build:native": "tsc -p tsconfig.json",
     "dev": "tsx watch src/extension.ts",
-    "type-check": "tsgo --noEmit -p tsconfig.json",
+    "type-check": "tsc --noEmit -p tsconfig.json",
     "test": "vitest",
     "test:integration": "pnpm run build && node ./tests/integration/runTests.mjs",
     "package": "vsce package --no-dependencies",
@@ -121,7 +121,7 @@
     "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.9.1",
     "tsx": "^4.22.3",
-    "typescript": "^6.0.3",
+    "typescript": "^7.0.2",
     "vitest": "^4.1.7"
   },
   "dependencies": {
