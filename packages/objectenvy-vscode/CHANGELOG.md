@@ -1,5 +1,12 @@
 # Change Log
 
+## 1.2.3
+
+### Patch Changes
+
+- Updated dependencies [[`0a6d365`](https://github.com/pradeepmouli/objectenvy/commit/0a6d3651162128ad788c324a694f81e95f3827d3)]:
+  - objectenvy@1.4.1
+
 ## 1.2.2
 
 ### Patch Changes
