@@ -10,14 +10,14 @@ with underscores and uppercasing the result. All values are stringified — numb
 become their string representations. Arrays are serialized as comma-separated strings (e.g.,
 `['a', 'b']` → `'a,b'`). Object items inside arrays are JSON-serialized before joining.
 
-The return type is `ToEnv<T>`, which preserves string literal and template literal types from the
+The return type is `ToEnv&lt;T&gt;`, which preserves string literal and template literal types from the
 config type all the way into the env record type.
 ```ts
 envy<T>(config: T): { [KeyType in string | number | symbol]: UnionToIntersection<[T] extends [unknown[]] ? never : [T] extends [object] ? { [K in string]: [T[K]] extends [unknown[]] ? `${ScreamingSnakeCase<(...), (...)>}` extends "" ? never : Record<`${(...)}`, string> : [(...)[(...)]] extends [object] ? { [K in (...)]: (...) }[(...) & (...)] : [(...)] extends [(...)] ? (...) extends (...) ? (...) : (...) : never }[keyof T & string] : [T] extends [Primitive] ? never : never>[KeyType] }
 ```
 **Parameters:**
 - `config: T` — A nested camelCased configuration object.
-**Returns:** `{ [KeyType in string | number | symbol]: UnionToIntersection<[T] extends [unknown[]] ? never : [T] extends [object] ? { [K in string]: [T[K]] extends [unknown[]] ? `${ScreamingSnakeCase<(...), (...)>}` extends "" ? never : Record<`${(...)}`, string> : [(...)[(...)]] extends [object] ? { [K in (...)]: (...) }[(...) & (...)] : [(...)] extends [(...)] ? (...) extends (...) ? (...) : (...) : never }[keyof T & string] : [T] extends [Primitive] ? never : never>[KeyType] }` — A flat `Record<string, string>` with `SCREAMING_SNAKE_CASE` keys and all values stringified.
+**Returns:** `{ [KeyType in string | number | symbol]: UnionToIntersection<[T] extends [unknown[]] ? never : [T] extends [object] ? { [K in string]: [T[K]] extends [unknown[]] ? `${ScreamingSnakeCase<(...), (...)>}` extends "" ? never : Record<`${(...)}`, string> : [(...)[(...)]] extends [object] ? { [K in (...)]: (...) }[(...) & (...)] : [(...)] extends [(...)] ? (...) extends (...) ? (...) : (...) : never }[keyof T & string] : [T] extends [Primitive] ? never : never>[KeyType] }` — A flat `Record&lt;string, string&gt;` with `SCREAMING_SNAKE_CASE` keys and all values stringified.
 **See:** - objectify for the inverse operation (env → config)
  - ToEnv for the compile-time type utility
 ```ts

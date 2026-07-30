@@ -56,6 +56,9 @@ For example, keys starting with 'max', 'min', 'is', 'enable', 'disable' will sta
 MAX_CONNECTIONS, MAX_TIMEOUT -> { maxConnections, maxTimeout }
 IS_DEBUG, IS_VERBOSE -> { isDebug, isVerbose }
 
+Defaults to `defaultNonNestingPrefixes`. Extend it without repeating the defaults:
+`nonNestingPrefixes: [...defaultNonNestingPrefixes, 'lsp', 'ws']`
+
 **Type:** `string[]`
 
 #### include
@@ -73,6 +76,22 @@ Matches against the normalized key (after prefix removal, in camelCase).
 Variables matching any pattern will be excluded.
 
 **Type:** `string[]`
+
+#### transform
+
+Post-parse transform applied after the config has been built and validated.
+Receives the fully coerced, validated config object and may return a wider type — use
+dedicated `objectify` overloads to capture the return type when adding derived fields.
+
+**Type:** `(parsed: T) => T`
+
+#### defaults
+
+Factory for context-aware defaults. Receives the raw env object (before coercion or prefix
+stripping) and returns raw env-style key-value pairs that fill in missing or undefined keys.
+Actual env values always take precedence over factory defaults.
+
+**Type:** `(raw: EnvLike) => Partial<Record<string, string | undefined>>`
 
 ## MergeOptions
 

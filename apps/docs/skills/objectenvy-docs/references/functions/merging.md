@@ -52,7 +52,7 @@ corresponding key in `obj1`. Nested objects are merged recursively. Arrays are h
 - `'concat-unique'`: same as concat but duplicate primitive values are removed; object items are
   deduplicated by deep JSON equality.
 
-The return type is `Merge<T, U>` (from `type-fest`), which correctly models `obj2` keys shadowing
+The return type is `Merge&lt;T, U&gt;` (from `type-fest`), which correctly models `obj2` keys shadowing
 `obj1` keys at the type level.
 ```ts
 merge<T, U>(obj1: T, obj2: U, options: MergeOptions): Merge<T, U>

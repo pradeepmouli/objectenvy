@@ -45,8 +45,6 @@
   "devDependencies": {
     "@changesets/changelog-github": "^0.7.0",
     "@changesets/cli": "^2.31.0",
-    "@to-skills/cli": "^0.3.14",
-    "@to-skills/vitepress": "^0.2.26",
     "@vitest/coverage-v8": "^4.1.7",
     "lint-staged": "^17.0.5",
     "oxfmt": "^0.52.0",
