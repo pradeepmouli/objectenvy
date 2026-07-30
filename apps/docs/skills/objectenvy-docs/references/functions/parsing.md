@@ -25,13 +25,22 @@ objectify<T>(): T
  - envy for the inverse operation (config → env)
 **Overloads:**
 ```ts
+objectify<T, TOut>(options: Omit<ObjectEnvyOptions<output<T>>, "transform"> & { schema: T; transform: (parsed: output<T>) => TOut }): TOut
+```
+```ts
+objectify<T>(options: ObjectEnvyOptions<output<T>> & { schema: T }): output<T>
+```
+```ts
+objectify<T, TOut>(options: Omit<ObjectEnvyOptions<T>, "transform"> & { transform: (parsed: T) => TOut }): TOut
+```
+```ts
 objectify(options: Omit<ObjectEnvyOptions<ConfigObject>, "schema" | "env"> & { env?: undefined }): ConfigObject
 ```
 ```ts
 objectify<E>(options: Omit<ObjectEnvyOptions<ConfigObject>, "schema"> & { env: E }): { [KeyType in string | number | symbol]: UnionToIntersection<{ [K in string]: HasSibling<K, keyof E & string> extends true ? BuildNested<K extends `${Head}_${Tail}` ? Head extends "" ? Tail extends `${(...)}_${(...)}` ? (...) extends (...) ? (...) : (...) : [(...)] : [Head, ...((...) extends (...) ? (...) : (...))[]] : [K], CoercedType<E[K]>> : { [P in string]: CoercedType<E[K]> } }[keyof E & string]>[KeyType] }
 ```
 ```ts
-objectify<T>(options: ObjectEnvyOptions<output<T>> & { schema: T }): output<T>
+objectify<T>(options: ObjectEnvyOptions<T>): T
 ```
 ```ts
 // Smart nesting — only nests when multiple entries share a prefix
@@ -67,6 +76,33 @@ const config = objectify({ env: process.env, schema });
 import { objectify } from 'objectenvy';
 const config = objectify({ env: process.env, coerce: false });
 // { port: '3000', debug: 'true' } — no type conversion applied
+```
+
+### `safeObjectify`
+Non-throwing variant of objectify. Returns a discriminated union instead of throwing on
+validation failure or transform errors.
+
+Catches all errors including `ZodError` (when a schema is provided) and any error thrown inside
+a `transform` callback. On `ZodError`, the original error is available as `result.error`.
+```ts
+safeObjectify<T, TOut>(options: Omit<ObjectEnvyOptions<T>, "transform"> & { transform: (parsed: T) => TOut }): { success: true; data: TOut } | { success: false; error: unknown }
+```
+**Parameters:**
+- `options: Omit<ObjectEnvyOptions<T>, "transform"> & { transform: (parsed: T) => TOut }`
+**Returns:** `{ success: true; data: TOut } | { success: false; error: unknown }` — `{ success: true; data: T }` on success, or `{ success: false; error: unknown }` on any
+  thrown error. When a `transform` that widens the type is provided, `data` is typed as `TOut`.
+**See:** objectify for the throwing variant
+**Overloads:**
+```ts
+safeObjectify<T>(options?: ObjectEnvyOptions<T>): { success: true; data: T } | { success: false; error: unknown }
+```
+```ts
+const result = safeObjectify({ env: import.meta.env, prefix: 'VITE', schema: ConfigSchema });
+if (!result.success) {
+  console.error('Config invalid:', result.error);
+  return;
+}
+const config = result.data;
 ```
 
 ### `objectEnvy`
