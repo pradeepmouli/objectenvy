@@ -1,5 +1,12 @@
 # objectenvy
 
+## 1.4.1
+
+### Patch Changes
+
+- [#111](https://github.com/pradeepmouli/objectenvy/pull/111) [`0a6d365`](https://github.com/pradeepmouli/objectenvy/commit/0a6d3651162128ad788c324a694f81e95f3827d3) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - - chore: also drop .github/agents, prompts, skills, copilot from master
+  - chore: drop AI tooling files from master
+
 ## 1.4.0
 
 ### Minor Changes
