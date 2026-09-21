@@ -116,8 +116,8 @@
     "clean": "rm -rf dist tsconfig.tsbuildinfo"
   },
   "devDependencies": {
-    "@types/node": "^25.9.1",
-    "@types/vscode": "^1.120.0",
+    "@types/node": "^26.6.1",
+    "@types/vscode": "^1.138.0",
     "@vscode/test-electron": "^3.1.0",
     "@vscode/vsce": "^3.9.1",
     "tsx": "^4.22.3",
