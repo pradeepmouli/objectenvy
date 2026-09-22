@@ -1,5 +1,11 @@
 # objectenvy
 
+## 1.4.2
+
+### Patch Changes
+
+- [#143](https://github.com/pradeepmouli/objectenvy/pull/143) [`7b906cc`](https://github.com/pradeepmouli/objectenvy/commit/7b906cc18301ff5e20a343d3d43fb2ca74eaaf60) Thanks [@pradeepmouli](https://github.com/pradeepmouli)! - - chore: remove stray npm package-lock.json
+
 ## 1.4.1
 
 ### Patch Changes
